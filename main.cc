@@ -4,15 +4,20 @@
 
 #include "triangulation.h"
 #include "bfs.h"
+#include "lca.h"
 
 int main(int argc, char **argv) {
   // triangulation g(3);
 
-
+  std::cout << "argc = " << argc << std::endl;
+  char const *filename = "triangulation.txt";
+  if (argc == 2) {
+    filename = argv[1];
+  }
   std::cout << "Reading input file...";
   std::cout.flush();
   auto start = std::chrono::high_resolution_clock::now();
-  std::ifstream inFile("triangulation.txt");
+  std::ifstream inFile(filename);
   triangulation g(inFile);
   auto stop = std::chrono::high_resolution_clock::now();
   auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
@@ -39,8 +44,21 @@ int main(int argc, char **argv) {
   std::vector<int[3]> bt(g.nFaces());
   int f0 = 0;
   half_edge e0(f0, 0);
-  bfs(g, e0, t, bt);
+  bfs_tree_cotree(g, e0, t, bt);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+
+  std::cout << "Computing LCA structure...";
+  std::cout.flush();
+  start = std::chrono::high_resolution_clock::now();
+  ;
+  stop = std::chrono::high_resolution_clock::now();
+  lca_structure lca(bt, f0);
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+
+
+
+
 }

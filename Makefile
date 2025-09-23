@@ -3,7 +3,7 @@
 CPP=g++
 CPPFLAGS=-c -O4 -Wall -DDEBUG
 
-OBJECTS=triangulation.o bfs.o
+OBJECTS=triangulation.o bfs.o lca.o rmq.o
 HEADERS=$(OBJECTS:.o=.h)
 main: $(OBJECTS) main.o
 	$(CPP) $(OBJECTS) main.o -o $@
