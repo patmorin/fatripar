@@ -2,8 +2,11 @@
 #define __BFS_H
 
 #include<vector>
+#include "triangulation.h"
 
-void triple_bfs(const triangulation &g, int f0,
-                std::vector<triangulation::half_edge> &t);
+
+void bfs(const triangulation &g, const half_edge e0,
+                std::vector<half_edge> &t,
+                std::vector<int[3]> &bt) ;
 
 #endif // __BFS_H
