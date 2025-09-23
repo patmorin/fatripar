@@ -5,7 +5,6 @@ triangulation::triangulation(std::istream& is)
   int n;
   is >> n;
 
-  std::cout << n << std::endl;
   auto f = 2*n - 4;
 
   this->n = n;
@@ -30,11 +29,11 @@ triangulation::triangulation(std::istream& is)
 void triangulation::verify() const {
   // simple verification that makes sure triangle adjacencies are symmetric and line up across reverse edges.
   // Does not check connectivity of dual.
-  for (int i = 0; i < nFaces(); i++) {
-    for (int j = 0; j < 3; j++) {
-      triangulation::half_edge e(*this, i, j);
+  for (size_t i = 0; i < nFaces(); i++) {
+    for (auto j = 0; j < 3; j++) {
+      half_edge e(i, j);
       // std::cout << e.source() << ", " << e.target() << std::endl;
-      triangulation::half_edge r(e.reverse());
+      half_edge r(e.reverse(*this));
       // std::cout << r.source() << ", " << r.target() << std::endl;
     }
   }
@@ -50,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const triangle& f) {
 
 std::ostream& operator<<(std::ostream& os, const triangulation &g) {
   os << g.nVertices() << std::endl;
-  for (auto i = 0; i < g.nFaces(); i++) {
+  for (size_t i = 0; i < g.nFaces(); i++) {
     for (auto j = 0; j < 3; j++) {
       os << g[i].vertices[j] << " ";
     }
@@ -62,6 +61,6 @@ std::ostream& operator<<(std::ostream& os, const triangulation &g) {
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const triangulation::half_edge& e) {
-  return os << e.source() << "->" << e.target();
+std::ostream& operator<<(std::ostream& os, const half_edge& e) {
+  return os << "half_edge()";
 }

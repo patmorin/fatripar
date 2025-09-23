@@ -34,9 +34,12 @@ int main(int argc, char **argv) {
   std::cout << "Computing BFS forest...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  triangulation::half_edge e0(g, -1, -1);
-  std::vector<triangulation::half_edge> t(g.nVertices(), e0);
-  triple_bfs(g, 0, t);
+  ;
+  std::vector<half_edge> t(g.nVertices(), half_edge (-2, -2));
+  std::vector<int[3]> bt(g.nFaces());
+  int f0 = 0;
+  half_edge e0(f0, 0);
+  bfs(g, e0, t, bt);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
