@@ -2,12 +2,10 @@
 #include<cassert>
 #include "lca.h"
 
-
 lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) : node2tour(bt.size(), -1)
 {
   // size_t n = bt.size();
 
-  std::vector<int> tour;
   int prev = -1;
   int depth = 0;
   int u = r;
@@ -42,8 +40,8 @@ lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) : node2tour(b
     prev = u;
     u = next;
   }
-  std::cout << tour.size() << " " << depths.size() << std::endl;
-  std::cout << node2tour.size() << std::endl;
+  // std::cout << tour.size() << " " << depths.size() << std::endl;
+  // std::cout << node2tour.size() << std::endl;
 
   // Map each node to its first occurrence in the tour
   for (size_t i = 0; i < tour.size(); i++) {
@@ -55,11 +53,31 @@ lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) : node2tour(b
     assert(node2tour[i] >= 0);
   }
 
-  rmq_structure rmq(depths);
+  // std::cout << std::endl;
+  // std::cout << std::endl;
+  rmq = new rmq_structure(depths);
+
+
+  // for (int z = 0; z < 10; z++) {
+  //   int x = z*10000;
+  //   int y = x+15;
+  //   std::cout << std::endl;
+  //   for (int i = x; i <= y; i++) {
+  //     std::cout << depths[i] << ",";
+  //   }
+  //   int m = rmq.query(x,y);
+  //   std::cout << std::endl
+  //             << "m = " << m << ", "
+  //             << "depths[m] = " << depths[m]
+  //             << std::endl << std::endl;
+  // }
   // const std::vector<int>& _data
 }
 
 int lca_structure::query(int v, int w) const
 {
-  return 0;
+  int x = node2tour[v];
+  int y = node2tour[w];
+  int u = rmq->query(x, y);
+  return tour[u];
 }

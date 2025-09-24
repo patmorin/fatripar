@@ -52,9 +52,8 @@ int main(int argc, char **argv) {
   std::cout << "Computing LCA structure...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  ;
-  stop = std::chrono::high_resolution_clock::now();
   lca_structure lca(bt, f0);
+  stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
