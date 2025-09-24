@@ -2,7 +2,10 @@
 #include<cassert>
 #include "lca.h"
 
-lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) : node2tour(bt.size(), -1)
+lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) :
+      tour(2*bt.size()-1, -1),
+      depths(2*bt.size()-1, -1),
+      node2tour(bt.size(), -1)
 {
   // size_t n = bt.size();
 
@@ -10,10 +13,11 @@ lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) : node2tour(b
   int depth = 0;
   int u = r;
   int next;
+  int i = 0;
   while (u != -1) {
     // std::cout << u << std::endl;
-    tour.push_back(u);
-    depths.push_back(depth);
+    tour[i] = u;
+    depths[i++] = depth;
     if (prev == bt[u][0]) {  // just came from parent
       if (bt[u][1] >= 0) {
         depth++;

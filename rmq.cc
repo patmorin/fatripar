@@ -8,6 +8,64 @@
 //
 // };
 
+class indirector {
+public:
+  std::vector<int> &data;
+  std::vector<int> &indices;
+
+  indirector(std::vector<int> &_data, std::vector<int> &_indices) : data(_data), indices(_indices) {}
+
+  size_t size() { return indices.size(); }
+  int& operator[](int i) { return data[indices[i]]; }
+};
+
+class rmq_blocked {
+protected:
+  std::vector<int> const &data;
+  const int d;
+  const int bs;
+  std::vector<int> blockmins;
+  std::vector<int> suffixmins;
+  std::vector<int> prefixmins;
+
+
+public:
+  rmq_blocked(const std::vector<int>& _data);
+};
+
+rmq_blocked::rmq_blocked(const std::vector<int>& _data) :
+    data(_data),
+    d((8*sizeof(data.size()) - __builtin_clz(data.size()) - 1)/2),
+    bs(d),
+    blockmins(data.size()/bs+1, -1),
+    suffixmins(data.size(), -1),
+    prefixmins(data.size(), -1)
+{
+  int n = data.size();
+  assert(n > 0);
+
+  // compute the minimum withi each block and suffixmins for each block
+  int mini = 0;
+  for (auto i = 1; i < n; i++) {
+    if (i % bs == 0) {
+      blockmins[i/bs - 1] = mini;
+      mini = i;
+    }
+    if (data[i] < data[mini]) mini = i;
+    prefixmins[i] = mini;
+  }
+
+  // compute the suffix minima for each block
+  mini = n-1;
+  for (int i = n-1; i >= 0; i--) {
+    if ((i+1) % bs == 0) mini = i;
+    if (data[i] < data[mini]) mini = i;
+    suffixmins[i] = mini;
+  }
+}
+
+
+
 // TODO: This is the O(n log n) space, O(1) query time data structure.
 rmq_structure::rmq_structure(const std::vector<int>& _data) : data(_data)
 {
