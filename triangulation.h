@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<cassert>
+#include<vector>
 
 struct triangle {
   int vertices[3];
@@ -15,7 +16,7 @@ std::ostream& operator<<(std::ostream& os, const triangle& f);
 class triangulation {
 protected:
   size_t n;  // number of vertices, number faces is 2n-4
-  triangle *faces;
+  std::vector<triangle> faces;
 
 public:
   triangulation(std::istream& is);
@@ -24,17 +25,7 @@ public:
     return this == &other;
   }
 
-  triangulation(int n) {
-    assert(n >= 3);
-    this->n = n;
-    faces = new triangle[2*n-4];
-  }
-
   void verify() const;
-
-  ~triangulation() {
-    delete faces;
-  }
 
   size_t nVertices() const {
     return n;
@@ -82,6 +73,7 @@ struct half_edge {
     }
     assert(ni < 3);
     assert(g[nt].vertices[(ni+1)%3] == source(g));
+    assert(g[nt].neighbours[ni] == left_face(g));
     return half_edge(nt, ni);
   }
 
