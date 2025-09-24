@@ -59,21 +59,30 @@ lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) :
 
   // std::cout << std::endl;
   // std::cout << std::endl;
-  rmq = new rmq_structure(depths);
+  rmq = new rmq_blocked(depths);
 
 
-  // for (int z = 0; z < 10; z++) {
-  //   int x = z*10000;
-  //   int y = x+15;
-  //   std::cout << std::endl;
-  //   for (int i = x; i <= y; i++) {
-  //     std::cout << depths[i] << ",";
+  // if (bt.size() >= 1000000) {
+  //   for (int z = 1; z < 100; z++) {
+  //     int x = z*10000;
+  //     int y = x+7;
+  //     std::cout << std::endl;
+  //     int mini = x;
+  //     for (int i = x; i <= y; i++) {
+  //       if (depths[i] < depths[mini]) {
+  //         mini = i;
+  //       }
+  //       std::cout << depths[i] << ",";
+  //     }
+  //     int m = rmq->query(x,y);
+  //     std::cout << std::endl
+  //               << "mini = " << mini << ", "
+  //               << "m = " << m << ", "
+  //               << "depths[mini] = " << depths[mini] << ", "
+  //               << "depths[m] = " << depths[m]
+  //               << std::endl << std::endl;
+  //     assert(m == mini);
   //   }
-  //   int m = rmq.query(x,y);
-  //   std::cout << std::endl
-  //             << "m = " << m << ", "
-  //             << "depths[m] = " << depths[m]
-  //             << std::endl << std::endl;
   // }
   // const std::vector<int>& _data
 }

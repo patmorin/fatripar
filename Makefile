@@ -1,12 +1,13 @@
 
 
 CPP=g++
-CPPFLAGS=-c -O4 -Wall -DDEBUG
+DEBUGS=-g -DDEBUG
+CPPFLAGS=-c -O4 -Wall $(DEBUGS)
 
 OBJECTS=triangulation.o bfs.o lca.o rmq.o
 HEADERS=$(OBJECTS:.o=.h)
 main: $(OBJECTS) main.o
-	$(CPP) $(OBJECTS) main.o -o $@
+	$(CPP) $(OBJECTS) $(DEBUGS) main.o -o $@
 
 bfs.o : bfs.cc bfs.h triangulation.h
 	$(CPP) -C $(CPPFLAGS) $< -o $@

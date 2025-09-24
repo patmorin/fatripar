@@ -2,14 +2,11 @@
 
 triangulation::triangulation(std::istream& is)
 {
-  int n;
-  is >> n;
+  is >> this->n;
 
-  auto f = 2*n - 4;
-
-  this->n = n;
-  this->faces = new triangle[f];
-  for (auto i = 0; i < f; i++) {
+  int nf = 2*n - 4;
+  faces.resize(nf);
+  for (auto i = 0; i < nf; i++) {
     // std::cout << i << "v ";
     for (auto j = 0; j < 3; j++) {
       is >> this->faces[i].vertices[j];
