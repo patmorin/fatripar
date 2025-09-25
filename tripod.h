@@ -35,7 +35,7 @@ protected:
     }
   }
 
-  int find_sperner_triangle(const half_edge e0, const half_edge e1, const half_edge e2);
+  int find_sperner_triangle(int f1, int f2, int f3);
 
   void monochromatic_instance(const half_edge e0 );
   void bichromatic_instance(const half_edge e0, const half_edge e1);

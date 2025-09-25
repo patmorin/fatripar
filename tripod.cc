@@ -190,12 +190,9 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
   }
 }
 
-int tripod_partition_algorithm::find_sperner_triangle(const half_edge e0, const half_edge e1, const half_edge e2)   {
+int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
   // find the triangle with vertices of all three colours
-  auto f0 = e0.left_face(g);
-  auto f1 = e1.left_face(g);
   auto p = lca->query(f0, f1);
-  auto f2 = e2.left_face(g);
   auto r = lca->query(p, f2);
 
   if (bt[r][1] == -1 || bt[r][2] == -1) {
@@ -239,7 +236,7 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
     }
   }
   if (i == 3) {
-    y.tau = find_sperner_triangle(e[0], e[1], e[2]);
+    y.tau = find_sperner_triangle(f[0], f[1], f[2]);
   }
 
   int c = tripods.size();
