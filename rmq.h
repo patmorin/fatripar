@@ -11,7 +11,7 @@ class rmq_big {
 private:
   std::vector<int> const &data;
   int n;
-  int d;
+  int logn;
   std::vector<int> m;
 
   int& lookup(int i, int k) { return m[k*data.size()+i]; }
@@ -29,7 +29,7 @@ public:
 /**
  * O(n) space, O(1) query time structure
  */
-class rmq_blocked {
+class rmq_opt {
 protected:
   std::vector<int> const &data;
   int n;
@@ -45,8 +45,8 @@ protected:
   rmq_big *rmqb;
 
 public:
-  rmq_blocked(const std::vector<int>& _data);
-  ~rmq_blocked() { delete rmqb; };
+  rmq_opt(const std::vector<int>& _data);
+  ~rmq_opt() { delete rmqb; };
   int query(int x, int y) const;
 };
 

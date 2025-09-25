@@ -9,7 +9,7 @@ protected:
   std::vector<int> tour;
   std::vector<int> depths;
   std::vector<int> node2tour;
-  rmq_blocked *rmq;
+  rmq_opt *rmq;
 
 public:
   lca_structure(const std::vector<int[3]> &bt, int r);

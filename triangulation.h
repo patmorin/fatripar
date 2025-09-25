@@ -77,8 +77,12 @@ struct half_edge {
     return half_edge(nt, ni);
   }
 
-  half_edge next_edge(const triangulation& g) {
+  half_edge next_edge_vertex(const triangulation& g) {
     return half_edge(t, (i+2)%3).reverse(g);
+  }
+
+  half_edge next_edge_face(const triangulation& g) {
+    return half_edge(t, (i+1)%3);
   }
 
   // half_edge& operator=(const half_edge& other) {

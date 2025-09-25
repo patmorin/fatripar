@@ -59,7 +59,7 @@ lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) :
 
   // std::cout << std::endl;
   // std::cout << std::endl;
-  rmq = new rmq_blocked(depths);
+  rmq = new rmq_opt(depths);
 
 
   // if (bt.size() >= 1000000) {

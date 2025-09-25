@@ -26,18 +26,18 @@
 rmq_big::rmq_big(const std::vector<int>& _data) :
     data(_data),
     n(data.size()),
-    d(8*sizeof(n) - __builtin_clz(n) - 1),
-    m(n*d)
+    logn(8*sizeof(n) - __builtin_clz(n) - 1),
+    m(n*logn)
 {
   assert(n > 0);
-  assert((1<<d) <= n);
-  assert(2*(1<<d) >= n);
+  assert((1<<logn) <= n);
+  assert(2*(1<<logn) >= n);
 
   for (auto i = 0; i < n; i++) {
     lookup(i, 0) = i;
   }
 
-  for (auto k = 1; k < d; k++) {
+  for (auto k = 1; k < logn; k++) {
     int bs = 1 << k;
     for (auto i = 0; i < n-bs; i++) {
       int a = lookup(i, k-1);
@@ -49,7 +49,7 @@ rmq_big::rmq_big(const std::vector<int>& _data) :
       }
     }
   }
-  // std::cout << "n = " << n << " d=" << d << std::endl;
+  // std::cout << "n = " << n << " logn=" << logn << std::endl;
 }
 
 int rmq_big::query(int x, int y) const {
@@ -84,7 +84,7 @@ int rmq_big::query(int x, int y) const {
   return b;
 }
 
-rmq_blocked::rmq_blocked(const std::vector<int>& _data) :
+rmq_opt::rmq_opt(const std::vector<int>& _data) :
     data(_data),
     n(data.size()),
     d((8*sizeof(n) - __builtin_clz(n) - 1)/2),
@@ -157,7 +157,7 @@ rmq_blocked::rmq_blocked(const std::vector<int>& _data) :
   }
 }
 
-int rmq_blocked::query(int x, int y) const
+int rmq_opt::query(int x, int y) const
 {
   int bx = x/bs;
   int by = y/bs;

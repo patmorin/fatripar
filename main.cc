@@ -5,6 +5,7 @@
 #include "triangulation.h"
 #include "bfs.h"
 #include "lca.h"
+#include "tripod.h"
 
 int main(int argc, char **argv) {
   // triangulation g(3);
@@ -34,30 +35,12 @@ int main(int argc, char **argv) {
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
-  // std::cout << g << std::endl;
-
-  std::cout << "Computing BFS forest...";
+  std::cout << "Computing tripod partition...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  ;
-  std::vector<half_edge> t(g.nVertices(), half_edge (-2, -2));
-  std::vector<int[3]> bt(g.nFaces());
-  int f0 = 0;
-  half_edge e0(f0, 0);
-  bfs_tree_cotree(g, e0, t, bt);
+  tripod_partition tripod(g);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
-  std::cout << "Computing LCA structure...";
-  std::cout.flush();
-  start = std::chrono::high_resolution_clock::now();
-  lca_structure lca(bt, f0);
-  stop = std::chrono::high_resolution_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
-
-
 
 }

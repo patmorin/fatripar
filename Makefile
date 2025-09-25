@@ -4,7 +4,7 @@ CPP=g++
 DEBUGS=-g -DDEBUG
 CPPFLAGS=-c -O4 -Wall $(DEBUGS)
 
-OBJECTS=triangulation.o bfs.o lca.o rmq.o
+OBJECTS=triangulation.o bfs.o lca.o rmq.o tripod.o
 HEADERS=$(OBJECTS:.o=.h)
 main: $(OBJECTS) main.o
 	$(CPP) $(OBJECTS) $(DEBUGS) main.o -o $@

@@ -51,8 +51,8 @@ void bfs_tree_cotree(const triangulation &g, const half_edge e0,
     half_edge e(q.front());
     q.pop();
     // process the neighbours of e.source()
-    for (half_edge e2 = e.next_edge(g); e2.target(g) != e.target(g);
-         e2 = e2.next_edge(g)) {
+    for (half_edge e2 = e.next_edge_vertex(g); e2.target(g) != e.target(g);
+      e2 = e2.next_edge_vertex(g)) {
       auto w = e2.target(g);
       if (t[w].t == -2) {
         t[w] = e2.reverse(g);
