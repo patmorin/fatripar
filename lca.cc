@@ -2,13 +2,14 @@
 #include<cassert>
 #include "lca.h"
 
-lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) :
+lca_structure::lca_structure(const std::vector<int[3]> &_bt, int r) :
+      bt(_bt),
       tour(2*bt.size()-1, -1),
       depths(2*bt.size()-1, -1),
       node2tour(bt.size(), -1)
 {
   // size_t n = bt.size();
-
+  return;
   int prev = -1;
   int depth = 0;
   int u = r;
@@ -89,8 +90,38 @@ lca_structure::lca_structure(const std::vector<int[3]> &bt, int r) :
 
 int lca_structure::query(int v, int w) const
 {
+  int dv = 0;
+  int vp = v;
+  while (bt[vp][0] != -1) {
+    dv++;
+    vp = bt[vp][0];
+  }
+  int dw = 0;
+  int wp = w;
+  while (bt[wp][0] != -1) {
+    dw++;
+    wp = bt[wp][0];
+  }
+  if (dv < dw) {
+    std::swap(v, w);
+    std::swap(dv, dw);
+  }
+  // now dv >= dw
+  while (dv > dw) {
+    v = bt[v][0];
+    dv--;
+  }
+  while (v != w) {
+    v = bt[v][0];
+    w = bt[w][0];
+  }
+  return v;
+
   int x = node2tour[v];
   int y = node2tour[w];
+  if (x > y) {
+    std::swap(x, y);
+  }
   int u = rmq->query(x, y);
   return tour[u];
 }

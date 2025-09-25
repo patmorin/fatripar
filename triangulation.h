@@ -46,6 +46,8 @@ struct half_edge {
   int i;  //
 
 // public:
+  half_edge() : t(-1), i(-1) { }
+
   half_edge(int _t, int _i) : t(_t), i(_i) { }
 
   int source(const triangulation& g) const {

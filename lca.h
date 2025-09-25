@@ -6,6 +6,7 @@
 
 class lca_structure {
 protected:
+  const std::vector<int[3]> &bt;
   std::vector<int> tour;
   std::vector<int> depths;
   std::vector<int> node2tour;
