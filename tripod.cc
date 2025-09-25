@@ -43,11 +43,15 @@ tripod_partition::tripod_partition(const triangulation& _g)
 }
 
 void tripod_partition::monochromatic_instance(const half_edge e0 ) {
+  assert(face_colours[e0.left_face(g)] == -1);
+
+  int c = tripods.size();
   tripod y;
   y.tau = e0.left_face(g);
+  face_colours[y.tau] = c;
   int u = e0.opposite_vertex(g);
   int lu = (e0.i+2) % 3;
-  int c = tripods.size();
+  assert(g[e0.left_face(g)].vertices[lu] == u);
   while (vertex_colours[u] == -1) {
     y.legs[lu].push_back(u);
     vertex_colours[u] = c;
@@ -55,7 +59,6 @@ void tripod_partition::monochromatic_instance(const half_edge e0 ) {
   }
   // tripod is complete, add it to the list
   tripods.push_back(y);
-  face_colours[y.tau] = c;
 
   if (y.legs[lu].empty()) {
     // tripod is degenerate, check for non-empty subproblems
@@ -64,6 +67,7 @@ void tripod_partition::monochromatic_instance(const half_edge e0 ) {
     if (!tree_edge(e1) && face_colours[e1.left_face(g)] == -1) {
       monochromatic_instance(e1);
     }
+    // check right subproblem
     half_edge e2 = e0.next_edge_face(g).reverse(g);
     if (!tree_edge(e2) && face_colours[e2.left_face(g)] == -1) {
       monochromatic_instance(e2);
