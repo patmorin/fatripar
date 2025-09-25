@@ -27,7 +27,7 @@ rmq_big::rmq_big(const std::vector<int>& _data) :
     data(_data),
     n(data.size()),
     logn(8*sizeof(n) - __builtin_clz(n) - 1),
-    m(n*logn)
+    m(n*(1+logn))
 {
   assert(n > 0);
   assert((1<<logn) <= n);
@@ -37,7 +37,7 @@ rmq_big::rmq_big(const std::vector<int>& _data) :
     lookup(i, 0) = i;
   }
 
-  for (auto k = 1; k < logn; k++) {
+  for (auto k = 1; k < (1+logn); k++) {
     int bs = 1 << k;
     for (auto i = 0; i < n-bs; i++) {
       int a = lookup(i, k-1);
@@ -159,6 +159,7 @@ rmq_opt::rmq_opt(const std::vector<int>& _data) :
 
 int rmq_opt::query(int x, int y) const
 {
+  assert(x <= y);
   int bx = x/bs;
   int by = y/bs;
   if (bx == by) {
@@ -174,6 +175,7 @@ int rmq_opt::query(int x, int y) const
     }
     assert(mini == tmini);
 #endif //DEBUG
+    assert(x <= tmini && tmini <= y);
     return tmini;
   }
   int xx = bx+1;
@@ -182,10 +184,14 @@ int rmq_opt::query(int x, int y) const
   if (xx <= yy) {
     // x and y have at least one block between them, use rmqb
     int rm = rmqb->query(xx, yy);
+    assert(xx <= rm && rm <= yy);
     rangemin = blockmins[rm];
   }
+  assert(x <= rangemin && rangemin <= y);
   int mina = suffixmins[x];
+  assert(x <= mina && mina <= y);
   int minb = prefixmins[y];
+  assert(x <= minb && minb <= y);
   if (data[rangemin] < data[mina]) {
     if (data[minb] < data[rangemin]) {
       return minb;

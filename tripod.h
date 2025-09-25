@@ -39,7 +39,7 @@ protected:
 
   void monochromatic_instance(const half_edge e0 );
   void bichromatic_instance(const half_edge e0, const half_edge e1);
-  void trichromatic_instance(const half_edge e0, const half_edge e1, const half_edge e3);
+  void trichromatic_instance(const std::vector<half_edge>& e);
 
   public:
   tripod_partition_algorithm(const triangulation& _g, std::vector<tripod> _tripods);

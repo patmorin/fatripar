@@ -11,6 +11,7 @@ protected:
   std::vector<int> depths;
   std::vector<int> node2tour;
   rmq_opt *rmq;
+  int query_trivial(int v, int w) const;
 
 public:
   lca_structure(const std::vector<int[3]> &bt, int r);

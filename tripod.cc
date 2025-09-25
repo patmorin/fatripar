@@ -33,6 +33,9 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
+  std::cout << "Computing tripod partition...";
+  std::cout.flush();
+  start = std::chrono::high_resolution_clock::now();
   tripod t0;
   t0.tau = f0;
   for (auto i = 0; i < 3; i++) {
@@ -48,19 +51,26 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
     auto s = subproblems.back();
     subproblems.pop_back();
     if (s.size() == 1) {
-      std::cout << "mono" << std::endl;
       monochromatic_instance(s[0]);
     } else if (s.size() == 2) {
-      std::cout << "bi" << std::endl;
       bichromatic_instance(s[0], s[1]);
     } else if (s.size() == 3) {
-      std::cout << "tri" << std::endl;
-      trichromatic_instance(s[0], s[1], s[2]);
+      trichromatic_instance(s);
     } else {
       assert(false);
     }
   }
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+
+  std::cout << "Cleaning up LCA structure...";
+  std::cout.flush();
+  start = std::chrono::high_resolution_clock::now();
   delete lca;
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 }
 
 void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
@@ -213,29 +223,25 @@ int tripod_partition_algorithm::find_sperner_triangle(const half_edge e0, const 
   return lca->query(f1, f2);
 }
 
-void tripod_partition_algorithm::trichromatic_instance(const half_edge e0, const half_edge e1, const half_edge e2) {
-  assert(face_colours[e0.left_face(g)] == -1);
-  assert(face_colours[e1.left_face(g)] == -1);
-  assert(face_colours[e2.left_face(g)] == -1);
-  assert(vertex_colours[e0.source(g)] == vertex_colours[e2.target(g)]);
-  assert(vertex_colours[e1.source(g)] == vertex_colours[e0.target(g)]);
-  assert(vertex_colours[e2.source(g)] == vertex_colours[e1.target(g)]);
+void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_edge>& e) {
+  int i;
+  for (i = 0; i < 3; i++) {
+    assert(face_colours[e[i].left_face(g)] == -1);
+    assert(vertex_colours[e[i].target(g)] == vertex_colours[e[(i+1)%3].source(g)]);
+  }
 
-
-  auto f0 = e0.left_face(g);
-  auto f1 = e1.left_face(g);
-  auto f2 = e2.left_face(g);
+  int f[3] = { e[0].left_face(g), e[1].left_face(g), e[2].left_face(g) };
 
   tripod y;
-  if (f0 == f1) {
-    y.tau = f0;
-  } else if (f1 == f2) {
-    y.tau = f1;
-  } else if (f2 == f0) {
-    y.tau = f2;
-  } else {
-    y.tau = find_sperner_triangle(e0, e1, e2);
+  for (i = 0; i < 3; i++) {
+    if (f[i] == f[(i+1)%3]) {
+      y.tau = f[i];
+    }
   }
+  if (i == 3) {
+    y.tau = find_sperner_triangle(e[0], e[1], e[2]);
+  }
+
   int c = tripods.size();
   face_colours[y.tau] = c;
 
@@ -247,36 +253,38 @@ void tripod_partition_algorithm::trichromatic_instance(const half_edge e0, const
       u = t[u].target(g);
     }
   }
-  for (auto i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++) {
     assert(vertex_colours[foot(y, i)] != vertex_colours[foot(y, (i+1)%3)]);
   }
   // tripod is complete, add it to the list
   tripods.push_back(y);
 
   int r = 0;
-  while (r < 3 && vertex_colours[e0.source(g)] != vertex_colours[foot(y, r)]) {
+  while (r < 3 && vertex_colours[e[0].source(g)] != vertex_colours[foot(y, r)]) {
     r++;
   }
   assert(r < 3);
 
-  // subproblem with e0, leg r and leg (r+1)%3
-  half_edge a0;
-  if (y.legs[r].empty()) {
-    a0 = half_edge(y.tau, r).reverse(g);
-  } else {
-    a0 = t[y.legs[r].back()];
-  }
-  half_edge a1;
-  if (y.legs[(r+1)%3].empty()) {
-    a1 = half_edge(y.tau, r).reverse(g);
-  } else {
-    a1 = t[y.legs[(r+1)%3].back()].reverse(g);
-  }
-  if (a0 == e0) {
-    // empty subproblem, do nothing
-  } else if (a0 == a1) {
-    subproblems.push_back(std::vector<half_edge> {e0, a0}); // bichromatic
-  } else {
-    subproblems.push_back(std::vector<half_edge> {a0, e0, a1}); // trichromatic
+  for (i = 0; i < 3; i++) {
+    // subproblem with e[i], leg r+i and leg (r+i+1)
+    half_edge a0;
+    if (y.legs[(r+i)%3].empty()) {
+      a0 = half_edge(y.tau, (r+i)%3).reverse(g);
+    } else {
+      a0 = t[y.legs[(r+i)%3].back()];
+    }
+    half_edge a1;
+    if (y.legs[(r+i+1)%3].empty()) {
+      a1 = half_edge(y.tau, (r+i)%3).reverse(g);
+    } else {
+      a1 = t[y.legs[(r+i+1)%3].back()].reverse(g);
+    }
+    if (a0 == e[i].reverse(g)) {
+      // empty subproblem, do nothing
+    } else if (a0 == a1) {
+      subproblems.push_back(std::vector<half_edge> {e[i], a0}); // bichromatic
+    } else {
+      subproblems.push_back(std::vector<half_edge> {a0, e[i], a1}); // trichromatic
+    }
   }
 }
