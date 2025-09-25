@@ -6,7 +6,7 @@ DEBUGS=
 OPTS=-O4
 CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 
-OBJECTS=triangulation.o bfs.o lca.o rmq.o tripod.o
+OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o
 HEADERS=$(OBJECTS:.o=.h)
 
 all: main

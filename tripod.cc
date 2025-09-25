@@ -2,11 +2,12 @@
 #include<iostream>
 #include<vector>
 #include<assert.h>
-#include "tripod.h"
 #include "bfs.h"
+#include "cotree.h"
 #include "lca.h"
+#include "tripod.h"
 
-tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, std::vector<tripod> _tripods) 
+tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, std::vector<tripod> _tripods)
     : g(_g),
       tripods(_tripods),
       vertex_colours(g.nVertices(), -1),
@@ -15,14 +16,22 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
       bt(g.nFaces()),
       lca(NULL), // dummy, will be initialized later
       subproblems() {
-  std::cout << "Computing BFS forest...";
+  std::cout << "Computing BFS tree...";
   std::cout.flush();
   auto start = std::chrono::high_resolution_clock::now();
   int f0 = 0;
   half_edge e0(f0, 0);
-  bfs_tree_cotree(g, e0, t, bt);
+  bfs_tree(g, e0, t);
   auto stop = std::chrono::high_resolution_clock::now();
   auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+
+  std::cout << "Computing cotree...";
+  std::cout.flush();
+  start = std::chrono::high_resolution_clock::now();
+  cotree(g, t, e0, bt);
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
   std::cout << "Computing LCA structure...";
@@ -71,6 +80,22 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+
+  std::cout << "Doing sanity checks...";
+  std::cout.flush();
+  start = std::chrono::high_resolution_clock::now();
+// #ifdef DEBUG
+  for (int v = 0; v < (int)g.nVertices(); v++) {
+    assert(vertex_colours[v] >= 0);
+  }
+  for (int f = 0; f < (int)g.nFaces(); f++) {
+    assert(face_colours[f] >= 0);
+  }
+// #endif // DEBUG
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+
 }
 
 void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
