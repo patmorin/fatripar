@@ -77,12 +77,24 @@ struct half_edge {
     return half_edge(nt, ni);
   }
 
-  half_edge next_edge_vertex(const triangulation& g) {
+  half_edge next_edge_vertex(const triangulation& g) const {
     return half_edge(t, (i+2)%3).reverse(g);
   }
 
-  half_edge next_edge_face(const triangulation& g) {
+  half_edge next_edge_face(const triangulation& g) const {
     return half_edge(t, (i+1)%3);
+  }
+
+  int opposite_vertex(const triangulation& g) const {
+    return g[t].vertices[(i+2)%3];
+  }
+
+  bool operator==(const half_edge& other) const {
+    return t == other.t && i == other.i;
+  }
+
+  bool operator!=(const half_edge& other) const {
+    return !(*this == other);
   }
 
   // half_edge& operator=(const half_edge& other) {
