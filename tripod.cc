@@ -108,7 +108,6 @@ void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
   y.tau = e0.left_face(g);
   // y has two empty legs e.source() and e0.target, and a third leg from e0.opposite()
   int c = tripods.size();
-  face_colours[y.tau] = c;
   int u = e0.opposite_vertex(g);
   int lu = (e0.i+2) % 3;
   assert(g[e0.left_face(g)].vertices[lu] == u);
@@ -118,7 +117,12 @@ void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
     u = t[u].target(g);
   }
   // tripod is complete, add it to the list
-  tripods.push_back(y);
+  if (y.empty()) {
+    face_colours[y.tau] = g.nFaces();
+  } else {
+    face_colours[y.tau] = c;
+    tripods.push_back(y);
+  }
 
   if (y.legs[lu].empty()) {
     // tripod is degenerate, check for non-empty subproblems
@@ -160,7 +164,6 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
   y.tau = e0.left_face(g);
   // y has two empty legs e.source() and e0.target, and a third leg from e0.opposite()
   int c = tripods.size();
-  face_colours[y.tau] = c;
   int u = e0.opposite_vertex(g);
   int lu = (e0.i+2) % 3;
   assert(g[e0.left_face(g)].vertices[lu] == u);
@@ -170,7 +173,13 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
     u = t[u].target(g);
   }
   // tripod is complete, add it to the list
-  tripods.push_back(y);
+  if (y.empty()) {
+    face_colours[y.tau] = g.nFaces();
+  } else {
+    face_colours[y.tau] = c;
+    tripods.push_back(y);
+  }
+
   if (y.legs[lu].empty()) {
     // tripod is degenerate, non-empty subproblems are monochromatic
     // check left subproblem
@@ -268,8 +277,6 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
   }
 
   int c = tripods.size();
-  face_colours[y.tau] = c;
-
   for (auto lu = 0; lu < 3; lu++) {
     int u = g[y.tau].vertices[lu];
     while (vertex_colours[u] == -1) {
@@ -282,7 +289,12 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
     assert(vertex_colours[foot(y, i)] != vertex_colours[foot(y, (i+1)%3)]);
   }
   // tripod is complete, add it to the list
-  tripods.push_back(y);
+  if (y.empty()) {
+    face_colours[y.tau] = g.nFaces();
+  } else {
+    face_colours[y.tau] = c;
+    tripods.push_back(y);
+  }
 
   int r = 0;
   while (r < 3 && vertex_colours[e[0].source(g)] != vertex_colours[foot(y, r)]) {

@@ -10,7 +10,6 @@
 int main(int argc, char **argv) {
   // triangulation g(3);
 
-  std::cout << "argc = " << argc << std::endl;
   char const *filename = "triangulation.txt";
   if (argc == 2) {
     filename = argv[1];

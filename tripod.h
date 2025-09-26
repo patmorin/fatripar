@@ -8,6 +8,10 @@
 struct tripod {
   int tau;
   std::vector<int> legs[3];
+
+  const bool empty() {
+    return legs[0].empty() && legs[1].empty() && legs[2].empty();
+  }
 };
 
 // An instance of the tripod_partition_algorithm.
