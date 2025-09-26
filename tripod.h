@@ -57,11 +57,10 @@ protected:
 
 // A tripod partition P of the vertices of a triangulaton g, so that tw(g/P) <= 3.
 class tripod_partition {
-protected:
+public:
   const triangulation& g;
   std::vector<tripod> tripods;
 
-public:
   // Advanced constructor. Requires that f0 be incident to the root of t
   tripod_partition(const triangulation& _g, std::vector<half_edge>& t, int f0) : g(_g), tripods() {
     tripod_partition_algorithm(g, t, f0, tripods);
