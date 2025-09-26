@@ -8,13 +8,13 @@ lca_structure::lca_structure(const std::vector<int[3]> &_bt, int r) :
       depths(2*bt.size()-1, -1),
       node2tour(bt.size(), -1)
 {
+  // The following implemnents a constant memory Euler tour of bt
   int prev = -1;
   int depth = 0;
   int u = r;
   int next;
   int i = 0;
   while (u != -1) {
-    // std::cout << u << std::endl;
     tour[i] = u;
     depths[i++] = depth;
     if (prev == bt[u][0]) {  // just came from parent
@@ -70,29 +70,32 @@ int lca_structure::query(int v, int w) const
   return tour[u];
 }
 
-
 int lca_structure::query_trivial(int v, int w) const {
+  // compute the depth of v by walking to the root
   int dv = 0;
   int vp = v;
   while (bt[vp][0] != -1) {
     dv++;
     vp = bt[vp][0];
   }
+  // compute the depth of w by walking to the root
   int dw = 0;
   int wp = w;
   while (bt[wp][0] != -1) {
     dw++;
     wp = bt[wp][0];
   }
+  // ensure that dv >= dw
   if (dv < dw) {
     std::swap(v, w);
     std::swap(dv, dw);
   }
-  // now dv >= dw
+  // walk from v up to depth(w)
   while (dv > dw) {
     v = bt[v][0];
     dv--;
   }
+  // walk up in parallel until v and w meet
   while (v != w) {
     v = bt[v][0];
     w = bt[w][0];

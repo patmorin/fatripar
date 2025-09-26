@@ -29,7 +29,7 @@ static inline void align3(int *a, int val) {
   rot3(a, (3-i) % 3);
 }
 
-void cotree(const triangulation& g, const std::vector<half_edge>& t, const half_edge& e0,
+void cotree(const triangulation& g, const std::vector<half_edge>& t, int f0,
   std::vector<int[3]>& bt)
 {
   // for (size_t v = 0; v < g.nVertices(); v++) {
@@ -43,8 +43,6 @@ void cotree(const triangulation& g, const std::vector<half_edge>& t, const half_
 
   // compute the cotree rooted at e0.left_face()
   // copy the triangulation adjacencies
-  auto v0 = e0.source(g);
-  auto f0 = e0.left_face(g);
   assert(t.size() == g.nVertices());
   assert(bt.size() == g.nFaces());
   for (size_t f = 0; f < g.nFaces(); f++) {
@@ -54,14 +52,14 @@ void cotree(const triangulation& g, const std::vector<half_edge>& t, const half_
   }
   // delete missing edges
   for (auto v = 0; v < (int)g.nVertices(); v++) {
-    if (v != v0) {
+    if (t[v].is_valid()) {
       // std::cout << v << " " << t[v].t << " " << t[v].i << std::endl;
-      assert(t[v].t >= 0 && (size_t)t[v].t < g.nFaces());
+      assert(t[v].f >= 0 && (size_t)t[v].f < g.nFaces());
       assert(t[v].i >= 0 && (size_t)t[v].i < g.nVertices());
-      assert(bt[t[v].t][t[v].i] == g[t[v].t].neighbours[t[v].i]);
-      bt[t[v].t][t[v].i] = -1;
+      assert(bt[t[v].f][t[v].i] == g[t[v].f].neighbours[t[v].i]);
+      bt[t[v].f][t[v].i] = -1;
       half_edge r = t[v].reverse(g);
-      bt[r.t][r.i] = -1;
+      bt[r.f][r.i] = -1;
     }
   }
 

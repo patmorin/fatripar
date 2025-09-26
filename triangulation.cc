@@ -1,5 +1,10 @@
 #include "triangulation.h"
 
+// Read a triangulation from an input stream.
+// Format: The zeroth line contains the number, n of vertices
+//         For 1 <= i <= n, the i'th line contains the three vertices
+//         vertices[0,1,2] and adjacencies neighbours[0,1,2] of
+//         triangle i-1.
 triangulation::triangulation(std::istream& is)
 {
   is >> this->n;
@@ -7,31 +12,23 @@ triangulation::triangulation(std::istream& is)
   int nf = 2*n - 4;
   faces.resize(nf);
   for (auto i = 0; i < nf; i++) {
-    // std::cout << i << "v ";
     for (auto j = 0; j < 3; j++) {
       is >> this->faces[i].vertices[j];
-      // std::cout << this->faces[i].vertices[j]
-      //           << ((j==2) ? "\n" : ",");
     }
-    // std::cout << i << "t ";
     for (auto j = 0; j < 3; j++) {
       is >> this->faces[i].neighbours[j];
-      // std::cout << this->faces[i].neighbours[j]
-      //           << ((j==2) ? "\n" : ",");
     }
   }
 }
 
 
+// simple verification that makes sure triangle adjacencies are symmetric and line up across reverse edges.
+// Does not check connectivity of dual.
 void triangulation::verify() const {
-  // simple verification that makes sure triangle adjacencies are symmetric and line up across reverse edges.
-  // Does not check connectivity of dual.
   for (size_t i = 0; i < nFaces(); i++) {
     for (auto j = 0; j < 3; j++) {
       half_edge e(i, j);
-      // std::cout << e.source() << ", " << e.target() << std::endl;
       half_edge r(e.reverse(*this));
-      // std::cout << r.source() << ", " << r.target() << std::endl;
     }
   }
 }

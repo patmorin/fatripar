@@ -2,8 +2,8 @@
 
 CPP=g++
 DEBUGS=-g -DDEBUG
-#DEBUGS=
-#OPTS=-O4
+DEBUGS=
+OPTS=-O4
 CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 
 OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o

@@ -22,7 +22,7 @@ void bfs_tree(const triangulation &g, const half_edge e0, std::vector<half_edge>
     for (half_edge e2 = e.next_edge_vertex(g); e2.target(g) != e.target(g);
       e2 = e2.next_edge_vertex(g)) {
       auto w = e2.target(g);
-      if (t[w].t == -2) {
+      if (t[w].f == -2) {
         t[w] = e2.reverse(g);
         q.push(t[w]);
       }

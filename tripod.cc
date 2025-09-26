@@ -7,29 +7,29 @@
 #include "lca.h"
 #include "tripod.h"
 
-tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, std::vector<tripod> _tripods)
+tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t,
+                                                       int f0, std::vector<tripod>& _tripods)
     : g(_g),
       tripods(_tripods),
       vertex_colours(g.nVertices(), -1),
       face_colours(g.nFaces(), -1),
-      t(g.nVertices(), half_edge (-2, -2)),
+      t(_t),
       bt(g.nFaces()),
       lca(NULL), // dummy, will be initialized later
       subproblems() {
-  std::cout << "Computing BFS tree...";
-  std::cout.flush();
+  // std::cout << "Computing BFS tree...";
+  // std::cout.flush();
   auto start = std::chrono::high_resolution_clock::now();
-  int f0 = 0;
-  e0 = half_edge(f0, 0);
-  bfs_tree(g, e0, t);
+  // e0 = half_edge(f0, 0);
+  // bfs_tree(g, e0, t);
   auto stop = std::chrono::high_resolution_clock::now();
   auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+  // std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
   std::cout << "Computing cotree...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  cotree(g, t, e0, bt);
+  cotree(g, t, f0, bt);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
@@ -45,7 +45,7 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
   std::cout << "Computing tripod partition...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  decompose();
+  partition(f0);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
@@ -75,8 +75,7 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
 
 }
 
-void tripod_partition_algorithm::decompose() {
-  int f0 = e0.left_face(g);
+void tripod_partition_algorithm::partition(int f0) {
   tripod t0;
   t0.tau = f0;
   for (auto i = 0; i < 3; i++) {
@@ -86,8 +85,8 @@ void tripod_partition_algorithm::decompose() {
   tripods.push_back(t0);
   face_colours[f0] = 0;
 
-  std::vector<half_edge> s0(1, e0.reverse(g));
-  subproblems.push_back(std::vector<half_edge>(1, e0.reverse(g)));
+
+  subproblems.push_back(std::vector<half_edge> {half_edge(f0, 0).reverse(g)});
   while (!subproblems.empty()) {
     auto s = subproblems.back();
     subproblems.pop_back();
@@ -131,7 +130,7 @@ void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
     // check right subproblem
     half_edge e2 = e0.next_edge_face(g).reverse(g);
     if (!tree_edge(e2) && face_colours[e2.left_face(g)] == -1) {
-      subproblems.push_back(std::vector<half_edge>(1,e2));
+      subproblems.push_back(std::vector<half_edge> {e2});
     }
   } else {
     // tripod is non-degenerate, subproblems are bichromatic
