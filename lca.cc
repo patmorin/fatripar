@@ -53,7 +53,7 @@ lca_structure::lca_structure(const std::vector<int[3]> &_bt, int r) :
   for (size_t i = 0; i < node2tour.size(); i++) {
     assert(node2tour[i] >= 0);
   }
-  rmq = new rmq_opt(depths);
+  rmq = new rmq_structure(depths);
 }
 
 int lca_structure::query(int v, int w) const

@@ -20,7 +20,7 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
   std::cout.flush();
   auto start = std::chrono::high_resolution_clock::now();
   int f0 = 0;
-  half_edge e0(f0, 0);
+  e0 = half_edge(f0, 0);
   bfs_tree(g, e0, t);
   auto stop = std::chrono::high_resolution_clock::now();
   auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
@@ -45,30 +45,7 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
   std::cout << "Computing tripod partition...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  tripod t0;
-  t0.tau = f0;
-  for (auto i = 0; i < 3; i++) {
-    vertex_colours[g[f0].vertices[i]] = 0;
-    t0.legs[i].push_back(g[f0].vertices[i]);
-  }
-  tripods.push_back(t0);
-  face_colours[f0] = 0;
-
-  std::vector<half_edge> s0(1, e0.reverse(g));
-  subproblems.push_back(std::vector<half_edge>(1, e0.reverse(g)));
-  while (!subproblems.empty()) {
-    auto s = subproblems.back();
-    subproblems.pop_back();
-    if (s.size() == 1) {
-      monochromatic_instance(s[0]);
-    } else if (s.size() == 2) {
-      bichromatic_instance(s[0], s[1]);
-    } else if (s.size() == 3) {
-      trichromatic_instance(s);
-    } else {
-      assert(false);
-    }
-  }
+  decompose();
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
@@ -98,6 +75,33 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
 
 }
 
+void tripod_partition_algorithm::decompose() {
+  int f0 = e0.left_face(g);
+  tripod t0;
+  t0.tau = f0;
+  for (auto i = 0; i < 3; i++) {
+    vertex_colours[g[f0].vertices[i]] = 0;
+    t0.legs[i].push_back(g[f0].vertices[i]);
+  }
+  tripods.push_back(t0);
+  face_colours[f0] = 0;
+
+  std::vector<half_edge> s0(1, e0.reverse(g));
+  subproblems.push_back(std::vector<half_edge>(1, e0.reverse(g)));
+  while (!subproblems.empty()) {
+    auto s = subproblems.back();
+    subproblems.pop_back();
+    if (s.size() == 1) {
+      monochromatic_instance(s[0]);
+    } else if (s.size() == 2) {
+      bichromatic_instance(s[0], s[1]);
+    } else if (s.size() == 3) {
+      trichromatic_instance(s);
+    } else {
+      assert(false);
+    }
+  }
+}
 void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
   assert(face_colours[e0.left_face(g)] == -1);
 

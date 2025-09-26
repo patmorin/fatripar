@@ -20,6 +20,7 @@ protected:
   std::vector<half_edge> t;
   std::vector<int[3]> bt;
   lca_structure *lca;
+  half_edge e0;
 
   std::vector<std::vector<half_edge>> subproblems;
 
@@ -43,6 +44,8 @@ protected:
 
   public:
   tripod_partition_algorithm(const triangulation& _g, std::vector<tripod> _tripods);
+
+  void decompose();
 };
 
 class tripod_partition {

@@ -10,7 +10,7 @@ protected:
   std::vector<int> tour;
   std::vector<int> depths;
   std::vector<int> node2tour;
-  rmq_opt *rmq;
+  rmq_structure *rmq;
   int query_trivial(int v, int w) const;
 
 public:
