@@ -17,62 +17,19 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
       bt(g.nFaces()),
       lca(NULL), // dummy, will be initialized later
       subproblems() {
-  // std::cout << "Computing BFS tree...";
-  // std::cout.flush();
-  auto start = std::chrono::high_resolution_clock::now();
-  // e0 = half_edge(f0, 0);
-  // bfs_tree(g, e0, t);
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  // std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
-  std::cout << "Computing cotree...";
-  std::cout.flush();
-  start = std::chrono::high_resolution_clock::now();
   cotree(g, t, f0, bt);
-  stop = std::chrono::high_resolution_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
-  std::cout << "Computing LCA structure...";
-  std::cout.flush();
-  start = std::chrono::high_resolution_clock::now();
   lca = new lca_structure(bt, f0);
-  stop = std::chrono::high_resolution_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
-  std::cout << "Computing tripod partition...";
-  std::cout.flush();
-  start = std::chrono::high_resolution_clock::now();
   partition(f0);
-  stop = std::chrono::high_resolution_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
-  std::cout << "Cleaning up LCA structure...";
-  std::cout.flush();
-  start = std::chrono::high_resolution_clock::now();
   delete lca;
-  stop = std::chrono::high_resolution_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
-  std::cout << "Doing sanity checks...";
-  std::cout.flush();
-  start = std::chrono::high_resolution_clock::now();
-// #ifdef DEBUG
+#ifdef DEBUG
   for (int v = 0; v < (int)g.nVertices(); v++) {
     assert(vertex_colours[v] >= 0);
   }
   for (int f = 0; f < (int)g.nFaces(); f++) {
     assert(face_colours[f] >= 0);
   }
-// #endif // DEBUG
-  stop = std::chrono::high_resolution_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
-
+#endif // DEBUG
 }
 
 void tripod_partition_algorithm::partition(int f0) {
@@ -236,18 +193,18 @@ int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
     // r has only one child, so it is one of the input faces
     // and the other two faces are in the same subtree
     if (r == f0) {
-      return lca->query(f1, f2); 
+      return lca->query(f1, f2);
     } else if (r == f1) {
-      return lca->query(f0, f2); 
+      return lca->query(f0, f2);
     } else /* r == f2 */ {
-      return lca->query(f0, f1); 
+      return lca->query(f0, f1);
     }
   }
   // r has two children, two of the input faces are in one subtree
   if (p != r) {
     // f0 and f1 are in the same subtree of r
     return p;
-  } 
+  }
   // f0 and f1 are in different subtrees of r, we need to know which one contains f2
   auto q = lca->query(f0, f2);
   if (q != r) {
