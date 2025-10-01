@@ -43,6 +43,20 @@ protected:
     }
   }
 
+  void grow_legs(tripod& y, int c) {
+    for (auto lu = 0; lu < 3; lu++) {
+      int u = g[y.tau].vertices[lu];
+      while (vertex_colours[u] == -1) {
+        y.legs[lu].push_back(u);
+        vertex_colours[u] = c;
+        u = t[u].target(g);
+      }
+    }
+    for (auto i = 0; i < 3; i++) {
+      assert(vertex_colours[foot(y, i)] != vertex_colours[foot(y, (i+1)%3)]);
+    }
+  }
+
   int find_sperner_triangle(int f1, int f2, int f3);
 
   void monochromatic_instance(const half_edge e0 );

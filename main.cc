@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
-  std::cout << "Compuging tripod partition...";
+  std::cout << "Computing tripod partition...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
   tripod_partition tp(g);

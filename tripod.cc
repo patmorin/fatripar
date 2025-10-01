@@ -82,19 +82,19 @@ void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
   }
 
   if (y.legs[lu].empty()) {
-    // tripod is degenerate, check for non-empty subproblems
-    // check left subproblem
+    // y is empty, subproblems are monochromatic
+    // check if left subproblem is non-empty
     half_edge e1 = e0.next_edge_vertex(g);
     if (!tree_edge(e1) && face_colours[e1.left_face(g)] == -1) {
       subproblems.push_back(std::vector<half_edge>(1, e1));
     }
-    // check right subproblem
+    // check if right subproblem is non-empty
     half_edge e2 = e0.next_edge_face(g).reverse(g);
     if (!tree_edge(e2) && face_colours[e2.left_face(g)] == -1) {
       subproblems.push_back(std::vector<half_edge> {e2});
     }
   } else {
-    // tripod is non-degenerate, subproblems are bichromatic
+    // y is non-empty, subproblems are bichromatic
     // check left subproblem
     half_edge e1 = e0.next_edge_vertex(g);
     half_edge e2 = t[y.legs[lu].back()];
@@ -119,7 +119,8 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
 
   tripod y;
   y.tau = e0.left_face(g);
-  // y has two empty legs e.source() and e0.target, and a third leg from e0.opposite()
+  // y has two empty legs e.source() and e0.target, and a
+  // third leg from e0.opposite()
   int c = tripods.size();
   int u = e0.opposite_vertex(g);
   int lu = (e0.i+2) % 3;
@@ -138,47 +139,55 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
   }
 
   if (y.legs[lu].empty()) {
-    // tripod is degenerate, non-empty subproblems are monochromatic
-    // check left subproblem
+    // y is empty, subproblems are mono and bichromatic
+    // check if left subproblem is non-empty
     half_edge e2 = e0.next_edge_vertex(g);
     if (!tree_edge(e2) && face_colours[e2.left_face(g)] == -1) {
       // non-empty, is it monochromatic or bichromatic?
       if (vertex_colours[e2.target(g)] == vertex_colours[e2.source(g)]) {
-        subproblems.push_back(std::vector<half_edge> {e2}); // monochromatic
+        // monochromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e2});
       } else {
-        subproblems.push_back(std::vector<half_edge> {e1, e2}); // bichromatic
+        // bichromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e1, e2});
       }
     }
-    // check right subproblem
+    // check if right subproblem is non-empty
     e2 = e0.next_edge_face(g).reverse(g);
     if (!tree_edge(e2) && face_colours[e2.left_face(g)] == -1) {
       // non-empty, is it monochromatic or bichromatic?
       if (vertex_colours[e2.target(g)] == vertex_colours[e2.source(g)]) {
-        subproblems.push_back(std::vector<half_edge> {e2}); // monochromatic
+        // monochromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e2});
       } else {
-        subproblems.push_back(std::vector<half_edge> {e1, e2}); // bichromatic
+        // bichromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e1, e2});
       }
     }
   } else {
-    // tripod is non-degenerate, non-empty subproblems are bi and trichromatic
-    // check left subproblem
+    // y is non-empty, subproblems are bi and trichromatic
+    // check if left subproblem is non-empty
     half_edge e2 = e0.next_edge_vertex(g);
     half_edge e3 = t[y.legs[lu].back()];
     if (e2 != e3.reverse(g)) {
       if (vertex_colours[e3.target(g)] == vertex_colours[e2.source(g)]) {
-        subproblems.push_back(std::vector<half_edge> {e2, e3}); // bichromatic
+        // bichromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e2, e3});
       } else {
-        subproblems.push_back(std::vector<half_edge> {e1, e2, e3}); // trichromatic
+        // trichromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e1, e2, e3});
       }
     }
-    // check right subproblem
+    // check if right subproblem is non-empty
     e2 = e0.next_edge_face(g).reverse(g);
     e3 = t[y.legs[lu].back()].reverse(g);
     if (e2 != e3.reverse(g)) {
       if (vertex_colours[e3.source(g)] == vertex_colours[e2.target(g)]) {
-        subproblems.push_back(std::vector<half_edge> {e2, e3}); // bichromatic
+        // bichromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e2, e3});
       } else {
-        subproblems.push_back(std::vector<half_edge> {e1, e3, e2}); // trichromatic
+        // trichromatic subproblem
+        subproblems.push_back(std::vector<half_edge> {e1, e3, e2});
       }
     }
   }
@@ -223,16 +232,20 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
 
   int f[3] = { e[0].left_face(g), e[1].left_face(g), e[2].left_face(g) };
 
+  // Sperner triangle is f[i] if when f[i] == f[i+1]
   tripod y;
   for (i = 0; i < 3; i++) {
     if (f[i] == f[(i+1)%3]) {
       y.tau = f[i];
+      break;
     }
   }
+  // Otherwise we use LCA structure
   if (i == 3) {
     y.tau = find_sperner_triangle(f[0], f[1], f[2]);
   }
 
+  // Construct the tripod
   int c = tripods.size();
   for (auto lu = 0; lu < 3; lu++) {
     int u = g[y.tau].vertices[lu];
@@ -253,6 +266,7 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
     tripods.push_back(y);
   }
 
+  // orient the tripod with respect to e[0],e[1],e[2]
   int r = 0;
   while (r < 3 && vertex_colours[e[0].source(g)] != vertex_colours[foot(y, r)]) {
     r++;
@@ -276,9 +290,11 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
     if (a0 == e[i].reverse(g)) {
       // empty subproblem, do nothing
     } else if (a0 == a1) {
-      subproblems.push_back(std::vector<half_edge> {e[i], a0}); // bichromatic
+      // bichromatic subproblem
+      subproblems.push_back(std::vector<half_edge> {e[i], a0});
     } else {
-      subproblems.push_back(std::vector<half_edge> {a0, e[i], a1}); // trichromatic
+      // trichromatic subproblem
+      subproblems.push_back(std::vector<half_edge> {a0, e[i], a1});
     }
   }
 }
