@@ -61,28 +61,15 @@ void tripod_partition_algorithm::partition(int f0) {
 void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
   assert(face_colours[e0.left_face(g)] == -1);
 
+  // y has two empty legs e.source() and e0.target, and a third leg from e0.opposite()
   tripod y;
   y.tau = e0.left_face(g);
-  // y has two empty legs e.source() and e0.target, and a third leg from e0.opposite()
-  int c = tripods.size();
-  int u = e0.opposite_vertex(g);
   int lu = (e0.i+2) % 3;
-  assert(g[e0.left_face(g)].vertices[lu] == u);
-  while (vertex_colours[u] == -1) {
-    y.legs[lu].push_back(u);
-    vertex_colours[u] = c;
-    u = t[u].target(g);
-  }
-  // tripod is complete, add it to the list
-  if (y.empty()) {
-    face_colours[y.tau] = g.nFaces();
-  } else {
-    face_colours[y.tau] = c;
-    tripods.push_back(y);
-  }
+  grow_leg(y, tripods.size(), lu);
 
   if (y.legs[lu].empty()) {
     // y is empty, subproblems are monochromatic
+    face_colours[y.tau] = g.nFaces();
     // check if left subproblem is non-empty
     half_edge e1 = e0.next_edge_vertex(g);
     if (!tree_edge(e1) && face_colours[e1.left_face(g)] == -1) {
@@ -95,6 +82,8 @@ void tripod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
     }
   } else {
     // y is non-empty, subproblems are bichromatic
+    face_colours[y.tau] = tripods.size();
+    tripods.push_back(y);
     // check left subproblem
     half_edge e1 = e0.next_edge_vertex(g);
     half_edge e2 = t[y.legs[lu].back()];
@@ -117,29 +106,16 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
   assert(vertex_colours[e0.source(g)] == vertex_colours[e1.target(g)]);
   assert(vertex_colours[e1.source(g)] == vertex_colours[e0.target(g)]);
 
-  tripod y;
-  y.tau = e0.left_face(g);
   // y has two empty legs e.source() and e0.target, and a
   // third leg from e0.opposite()
-  int c = tripods.size();
-  int u = e0.opposite_vertex(g);
+  tripod y;
+  y.tau = e0.left_face(g);
   int lu = (e0.i+2) % 3;
-  assert(g[e0.left_face(g)].vertices[lu] == u);
-  while (vertex_colours[u] == -1) {
-    y.legs[lu].push_back(u);
-    vertex_colours[u] = c;
-    u = t[u].target(g);
-  }
-  // tripod is complete, add it to the list
-  if (y.empty()) {
-    face_colours[y.tau] = g.nFaces();
-  } else {
-    face_colours[y.tau] = c;
-    tripods.push_back(y);
-  }
+  grow_leg(y, tripods.size(), lu);
 
   if (y.legs[lu].empty()) {
     // y is empty, subproblems are mono and bichromatic
+    face_colours[y.tau] = g.nFaces();
     // check if left subproblem is non-empty
     half_edge e2 = e0.next_edge_vertex(g);
     if (!tree_edge(e2) && face_colours[e2.left_face(g)] == -1) {
@@ -166,6 +142,8 @@ void tripod_partition_algorithm::bichromatic_instance(const half_edge e0, const 
     }
   } else {
     // y is non-empty, subproblems are bi and trichromatic
+    face_colours[y.tau] = tripods.size();
+    tripods.push_back(y);
     // check if left subproblem is non-empty
     half_edge e2 = e0.next_edge_vertex(g);
     half_edge e3 = t[y.legs[lu].back()];
@@ -232,29 +210,18 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
 
   int f[3] = { e[0].left_face(g), e[1].left_face(g), e[2].left_face(g) };
 
-  // Sperner triangle is f[i] if when f[i] == f[i+1]
   tripod y;
-  for (i = 0; i < 3; i++) {
-    if (f[i] == f[(i+1)%3]) {
-      y.tau = f[i];
-      break;
-    }
-  }
-  // Otherwise we use LCA structure
-  if (i == 3) {
+  for (i = 0; i < 3 && f[i] != f[(i+1)%3]; i++) {}
+  if (i < 3) {
+    // Sperner triangle is f[i] when f[i] == f[i+1]
+    y.tau = f[i];
+  } else {
+    // f[0], f[1], and f[2] are distinct, use LCA structure
     y.tau = find_sperner_triangle(f[0], f[1], f[2]);
   }
 
   // Construct the tripod
-  int c = tripods.size();
-  for (auto lu = 0; lu < 3; lu++) {
-    int u = g[y.tau].vertices[lu];
-    while (vertex_colours[u] == -1) {
-      y.legs[lu].push_back(u);
-      vertex_colours[u] = c;
-      u = t[u].target(g);
-    }
-  }
+  grow_legs(y, tripods.size());
   for (i = 0; i < 3; i++) {
     assert(vertex_colours[foot(y, i)] != vertex_colours[foot(y, (i+1)%3)]);
   }
@@ -262,19 +229,23 @@ void tripod_partition_algorithm::trichromatic_instance(const std::vector<half_ed
   if (y.empty()) {
     face_colours[y.tau] = g.nFaces();
   } else {
-    face_colours[y.tau] = c;
+    face_colours[y.tau] = tripods.size();
     tripods.push_back(y);
   }
 
-  // orient the tripod with respect to e[0],e[1],e[2]
+  // orient y with respect to e[0],e[1],e[2] so that foot(y,r+i) is "between"
+  // e[i-1] and e[i] on the boundary of the subproblem
   int r = 0;
   while (r < 3 && vertex_colours[e[0].source(g)] != vertex_colours[foot(y, r)]) {
     r++;
   }
   assert(r < 3);
+  for (i = 0; i < 3; i++) {
+    assert(vertex_colours[foot(y,(r+i)%3)] == vertex_colours[e[i].source(g)]);
+  }
 
   for (i = 0; i < 3; i++) {
-    // subproblem with e[i], leg r+i and leg (r+i+1)
+    // subproblem with portals at leg r+i, e[i], and leg (r+i+1)
     half_edge a0;
     if (y.legs[(r+i)%3].empty()) {
       a0 = half_edge(y.tau, (r+i)%3).reverse(g);
