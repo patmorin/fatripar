@@ -1,0 +1,104 @@
+//
+// Created by morin on 10/3/25.
+//
+
+#ifndef FATRIPAR_BIPOD_H
+#define FATRIPAR_BIPOD_H
+
+#include "triangulation.h"
+#include "lca.h"
+
+struct bipod {
+    half_edge tau;
+    std::vector<int> legs[2];
+
+    const bool empty() {
+        return legs[0].empty() && legs[1].empty();
+    }
+};
+
+// An instance of the bipod_partition_algorithm.
+// This object is designed to be created and then forgotten.
+// It's only purpose is to fill in the bipods array
+// provided in its constructor.
+class bipod_partition_algorithm {
+protected:
+  const triangulation& g;
+  std::vector<bipod> &bipods;
+  std::vector<int> vertex_colours;
+  std::vector<bool> edge_status;
+  const std::vector<half_edge>& t;
+  std::vector<int[3]> bt;
+  lca_structure *lca;
+
+  std::vector<std::vector<half_edge>> subproblems;
+
+  bool solid_edge(const half_edge& e) const {
+    auto e2= e.reverse(g);
+    return edge_status[3*e.f + e.i] || edge_status[3*e2.f + e2.i];
+  }
+
+  void make_solid(const half_edge& e) {
+    edge_status[3*e.f + e.i] = true;
+    auto e2= e.reverse(g);
+    edge_status[3*e2.f + e2.i] = true;
+  }
+
+  int foot(const bipod& y, int lu) const {
+    if (y.legs[lu].empty()) {
+      return g[y.tau.f].vertices[(y.tau.i+lu)%3];
+    } else {
+      return t[y.legs[lu].back()].target(g);
+    }
+  }
+
+  void grow_leg(bipod& y, int c, int lu) {
+    int u = g[y.tau.f].vertices[(y.tau.i+lu)%3];
+    while (vertex_colours[u] == -1) {
+      y.legs[lu].push_back(u);
+      vertex_colours[u] = c;
+      make_solid(t[u]);
+      u = t[u].target(g);
+    }
+  }
+
+  void grow_legs(bipod& y, int c) {
+    for (auto lu = 0; lu < 2; lu++) {
+      grow_leg(y, c, lu);
+    }
+  }
+
+  // int find_sperner_triangle(int f1, int f2, int f3);
+
+  void monochromatic_instance(const half_edge e0 );
+  void bichromatic_instance(const half_edge e0, const half_edge e1);
+  void trichromatic_instance(const std::vector<half_edge>& e);
+  void quadrichromatic_instance(const std::vector<half_edge>& e);
+
+  public:
+  bipod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t, int f0, std::vector<bipod>& _bipods);
+
+  void partition(int f0);
+};
+
+// A bipod partition P of the vertices of a triangulaton g, so that tw(g/P) <= 3.
+class bipod_partition {
+public:
+  const triangulation& g;
+  std::vector<bipod> bipods;
+
+  // Advanced constructor. Requires that f0 be incident to the root of t
+  bipod_partition(const triangulation& _g, std::vector<half_edge>& t, int f0) : g(_g), bipods() {
+    bipod_partition_algorithm(g, t, f0, bipods);
+  }
+
+  // Standard partition that gives H*P*K_3 where tw(H) <= 3
+  bipod_partition(const triangulation& _g) : g(_g), bipods() {
+    std::vector<half_edge> t(g.nVertices(), half_edge(-2,-2));
+    bfs_tree(g, half_edge(0, 0), t);
+    bipod_partition_algorithm(g, t, 0, bipods);
+  }
+};
+
+
+#endif //FATRIPAR_BIPOD_H
