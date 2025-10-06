@@ -2,6 +2,8 @@
 
 CPP=g++
 
+
+
 # Use these for slow debuggable binary
 DEBUGS=-g -DDEBUG
 OPTS=-Og
@@ -9,6 +11,7 @@ OPTS=-Og
 # Use these for fastest binary
 DEBUGS=
 OPTS=-O3
+
 CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 
 OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o

@@ -27,9 +27,24 @@ protected:
   const std::vector<half_edge>& t;
   std::vector<int[3]> bt;
   lca_structure *lca;
-  // half_edge e0;
 
-  std::vector<std::vector<half_edge>> subproblems;
+  struct subproblem {
+    size_t chromacity;
+    half_edge e[3];
+
+    subproblem(size_t _n) : chromacity(_n) { }
+    subproblem(std::initializer_list<half_edge> _e) : chromacity(_e.size()) {
+      size_t i = 0;
+      for (auto x : _e) {
+        e[i++] = x;
+      }
+    }
+    half_edge& operator[](size_t i) { return e[i]; }
+    const half_edge& operator[](size_t i) const { return e[i]; }
+    const size_t size() const { return chromacity; }
+  };
+
+  std::vector<subproblem> subproblems;
 
   bool tree_edge(const half_edge e) const {
     return t[e.source(g)] == e || t[e.target(g)] == e.reverse(g);
@@ -60,17 +75,20 @@ protected:
 
   int find_sperner_triangle(int f1, int f2, int f3);
 
-  void monochromatic_instance(const half_edge e0 );
-  void bichromatic_instance(const half_edge e0, const half_edge e1);
-  void trichromatic_instance(const std::vector<half_edge>& e);
+  void subcritical_instance(const subproblem& s);
+  void trichromatic_instance(const subproblem& s);
 
   public:
-  tripod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t, int f0, std::vector<tripod>& _tripods);
+  tripod_partition_algorithm(const triangulation& _g,
+                             const std::vector<half_edge>& _t,
+                             int f0,
+                             std::vector<tripod>& _tripods);
 
   void partition(int f0);
 };
 
-// A tripod partition P of the vertices of a triangulaton g, so that tw(g/P) <= 3.
+// A tripod partition P of the vertices of a triangulaton g,
+// so that tw(g/P) <= 3.
 class tripod_partition {
 public:
   const triangulation& g;
