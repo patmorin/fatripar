@@ -28,19 +28,21 @@ protected:
   std::vector<int[3]> bt;
   lca_structure *lca;
 
-  struct subproblem {
+  class subproblem final {
+  private:
     size_t chromacity;
-    half_edge e[3];
+    half_edge portals[3];
 
+  public:
     subproblem(size_t _n) : chromacity(_n) { }
     subproblem(std::initializer_list<half_edge> _e) : chromacity(_e.size()) {
       size_t i = 0;
       for (auto x : _e) {
-        e[i++] = x;
+        portals[i++] = x;
       }
     }
-    half_edge& operator[](size_t i) { return e[i]; }
-    const half_edge& operator[](size_t i) const { return e[i]; }
+    half_edge& operator[](size_t i) { return portals[i]; }
+    const half_edge& operator[](size_t i) const { return portals[i]; }
     const size_t size() const { return chromacity; }
   };
 
@@ -76,7 +78,10 @@ protected:
   int find_sperner_triangle(int f1, int f2, int f3);
 
   void subcritical_instance(const subproblem& s);
+
   void trichromatic_instance(const subproblem& s);
+
+  void partition(int f0);
 
   public:
   tripod_partition_algorithm(const triangulation& _g,
@@ -84,7 +89,6 @@ protected:
                              int f0,
                              std::vector<tripod>& _tripods);
 
-  void partition(int f0);
 };
 
 // A tripod partition P of the vertices of a triangulaton g,

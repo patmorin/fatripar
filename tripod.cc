@@ -43,7 +43,6 @@ void tripod_partition_algorithm::partition(int f0) {
   tripods.push_back(t0);
   face_colours[f0] = 0;
 
-
   subproblems.push_back(subproblem {half_edge(f0, 0).reverse(g)});
   while (!subproblems.empty()) {
     auto s = subproblems.back();
@@ -186,16 +185,18 @@ void tripod_partition_algorithm::trichromatic_instance(const subproblem& s) {
   for (i = 0; i < 3; i++) {
     assert(vertex_colours[foot(y, i)] != vertex_colours[foot(y, (i+1)%3)]);
   }
-  // tripod is complete, add it to the list
+
   if (y.empty()) {
+    // y is empty, colour y.tau, but don't add y to our partition
     face_colours[y.tau] = g.nFaces();
   } else {
+    // y is non-empty, could y.tau but don't add y to our partition
     face_colours[y.tau] = tripods.size();
     tripods.push_back(y);
   }
 
   // orient y with respect to e[0],e[1],e[2] so that foot(y,r+i) is "between"
-  // e[i-1] and e[i] on the boundary of the subproblem
+  // s[i-1] and s[i] on the boundary of the subproblem
   int r = 0;
   while (r < 3 && vertex_colours[s[0].source(g)] != vertex_colours[foot(y, r)]) {
     r++;
