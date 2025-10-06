@@ -61,6 +61,65 @@ void bipod_partition_algorithm::partition(int f0) {
     }
   }
 }
+
+void bipod_partition_algorithm::subcritical_instance(const vector<half_edge> e ) {
+  auto d = e.size();
+  for (auto i = 0; i < d; i++) {
+    assert(vertex_colours[e[i].source(g)] == vertex_colours[e[i].target(g)]);
+    assert(solid_edge(e[i]));
+    if (d > 1) {
+      // check that portal edges are bichromatic
+      assert(vertex_colours[e[i].target(g)]
+            != vertex_colours[e[(i+1)%d)].source(g)]);
+    }
+  }
+
+  bipod y;
+  y.tau = e0.next_edge_vertex(g);
+  grow_leg(y, bipods.size(), 1);
+
+  if (y.legs[1].empty()) {
+    // check if left subproblem is non-empty
+    if (!solid_edge(y.tau)) {
+      make_solid(y.tau);
+      auto j = 0;
+      while (j < e.size() && vertex_colours[foot(y)]
+                             != vertex_colours[e[j].source(g)]) {
+        j++;
+      }
+      assert(j < e.size());
+      std::vector<half_edge>
+
+      for (auto j = 0; j < e.size() && ; j++) {
+
+      }
+      subproblems.push_back(std::vector<half_edge>(1, y.tau));
+    }
+    // check if right subproblem is non-empty
+    auto e2 = e0.next_edge_face(g).reverse(g);
+    if (!solid_edge(e2)) {
+      make_solid(e2);
+      subproblems.push_back(std::vector<half_edge> {e2});
+    }
+  } else {
+    // y is non-empty, subproblems are bichromatic
+    make_solid(y.tau);
+    bipods.push_back(y);
+    // check left subproblem
+    auto e2 = t[y.legs[1].back()];
+    if (y.tau != e2.reverse(g)) {
+      subproblems.push_back(std::vector<half_edge> {y.tau, e2});
+    }
+    // check right subproblem
+    auto e1 = e0.next_edge_face(g).reverse(g);
+    make_solid(e1);
+    e2 = t[y.legs[1].back()].reverse(g);
+    if (e1 != e2.reverse(g)) {
+      subproblems.push_back(std::vector<half_edge> {e1, e2});
+    }
+  }
+}
+
 void bipod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
   // assert(face_colours[e0.left_face(g)] == -1);
 
@@ -203,11 +262,10 @@ void bipod_partition_algorithm::bichromatic_instance(const half_edge e0, const h
 //   return lca->query(f1, f2);
 // }
 
-/*
+
 void bipod_partition_algorithm::trichromatic_instance(const std::vector<half_edge>& e) {
   int i;
   for (i = 0; i < 3; i++) {
-    assert(face_colours[e[i].left_face(g)] == -1);
     assert(vertex_colours[e[i].target(g)] == vertex_colours[e[(i+1)%3].source(g)]);
   }
 
@@ -272,4 +330,3 @@ void bipod_partition_algorithm::trichromatic_instance(const std::vector<half_edg
     }
   }
 }
-*/
