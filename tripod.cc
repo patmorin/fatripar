@@ -237,32 +237,17 @@ void tripod_partition_algorithm::trichromatic_instance(const subproblem& s) {
 }
 
 int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
-  auto p = lca->query(f0, f1);
-  auto r = lca->query(p, f2);
-
-  if (bt[r][1] == -1 || bt[r][2] == -1) {
-    // r has only one child, so it is one of the input faces
-    // and the other two faces are in the same subtree
-    if (r == f0) {
-      return lca->query(f1, f2);
-    } else if (r == f1) {
-      return lca->query(f0, f2);
-    } else /* r == f2 */ {
-      return lca->query(f0, f1);
+  int f[3] = { f0, f1, f2 };
+  int a[3];
+  for (auto i = 0; i < 3; i++) {
+    a[i] = lca->query(f[i], f[(i+1)%3]);    
+  }
+  for (auto i = 0; i < 3; i++) {
+    if (a[i] == a[(i+1)%3]) {
+      return a[(i+2)%3];
     }
   }
-  // r has two children, two of the input faces are in one subtree
-  if (p != r) {
-    // f0 and f1 are in the same subtree of r
-    return p;
-  }
-  // f0 and f1 are in different subtrees of r=p, we need to know which
-  // one contains f2
-  auto q = lca->query(f0, f2);
-  if (q != r) {
-    // f0 and f2 are in the same subtree of r
-    return q;
-  }
-  // f1 and f2 are in the same subtree of r
-  return lca->query(f1, f2);
+  assert(false);
+  return a[0]; // very bad news!
 }
+

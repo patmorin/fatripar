@@ -1,8 +1,4 @@
-
-
 CPP=g++
-
-
 
 # Use these for slow debuggable binary
 DEBUGS=-g -DDEBUG
