@@ -1,27 +1,28 @@
 CPP=g++
 
-# Use these for slow debuggable binary
-DEBUGS=-g -DDEBUG
-OPTS=-Og
 
 # Use these for fastest binary
 DEBUGS=
 OPTS=-O3
 
+# Use these for slow debuggable binary
+DEBUGS=-g -DDEBUG
+OPTS=-Og
+
 CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 
-OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o
+OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o bipod.o
 HEADERS=$(OBJECTS:.o=.h)
 
-all: main
+all: tripod_demo
 
-main: $(OBJECTS) main.o
-	$(CPP) $(OBJECTS) $(DEBUGS) main.o -o $@
+tripod_demo: $(OBJECTS) tripod_demo.o
+	$(CPP) $(OBJECTS) $(DEBUGS) tripod_demo.o -o $@
 
 bfs.o : bfs.cc bfs.h triangulation.h
 	$(CPP) -C $(CPPFLAGS) $< -o $@
 
-main.o : main.cc $(HEADERS)
+main.o : tripod_demo.cc $(HEADERS)
 	$(CPP) -C $(CPPFLAGS) $< -o $@
 
 %.o: %.cc %.h

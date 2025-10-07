@@ -31,7 +31,25 @@ protected:
   std::vector<int[3]> bt;
   lca_structure *lca;
 
-  std::vector<std::vector<half_edge>> subproblems;
+  class subproblem final {
+  private:
+    size_t chromacity;
+    half_edge portals[4];
+
+  public:
+    subproblem(size_t _n) : chromacity(_n) { }
+    subproblem(std::initializer_list<half_edge> _e) : chromacity(_e.size()) {
+      size_t i = 0;
+      for (auto x : _e) {
+        portals[i++] = x;
+      }
+    }
+    half_edge& operator[](size_t i) { return portals[i]; }
+    const half_edge& operator[](size_t i) const { return portals[i]; }
+    const size_t size() const { return chromacity; }
+  };
+
+  std::vector<subproblem> subproblems;
 
   bool solid_edge(const half_edge& e) const {
     auto e2= e.reverse(g);
@@ -70,10 +88,8 @@ protected:
 
   // int find_sperner_triangle(int f1, int f2, int f3);
 
-  void monochromatic_instance(const half_edge e0 );
-  void bichromatic_instance(const half_edge e0, const half_edge e1);
-  void trichromatic_instance(const std::vector<half_edge>& e);
-  void quadrichromatic_instance(const std::vector<half_edge>& e);
+  void subcritical_instance(const subproblem& s);
+  void quadrichromatic_instance(const subproblem& s);
 
   public:
   bipod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t, int f0, std::vector<bipod>& _bipods);

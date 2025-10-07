@@ -27,7 +27,9 @@ bipod_partition_algorithm::bipod_partition_algorithm(const triangulation& _g, co
     assert(vertex_colours[v] >= 0);
   }
   for (int f = 0; f < (int)g.nFaces(); f++) {
-    assert(face_colours[f] >= 0);
+    for (int i = 0; i < 3; i++) {
+      assert(solid_edge(half_edge(f, i)));
+    }
   }
 #endif // DEBUG
 }
@@ -46,287 +48,100 @@ void bipod_partition_algorithm::partition(int f0) {
   // face_colours[f0] = 0;
 
 
-  subproblems.push_back(std::vector<half_edge> {half_edge(f0, 0).reverse(g)});
+  subproblems.push_back(subproblem {half_edge(f0, 0).reverse(g)});
   while (!subproblems.empty()) {
     auto s = subproblems.back();
     subproblems.pop_back();
-    if (s.size() == 1) {
-      monochromatic_instance(s[0]);
-    } else if (s.size() == 2) {
-      bichromatic_instance(s[0], s[1]);
-    } else if (s.size() == 3) {
-      trichromatic_instance(s);
+    if (s.size() < 4) {
+      subcritical_instance(s);
+    } else if (s.size() == 4) {
+      quadrichromatic_instance(s);
     } else {
       assert(false);
     }
   }
 }
 
-void bipod_partition_algorithm::subcritical_instance(const vector<half_edge> e ) {
-  auto d = e.size();
-  for (auto i = 0; i < d; i++) {
-    assert(vertex_colours[e[i].source(g)] == vertex_colours[e[i].target(g)]);
-    assert(solid_edge(e[i]));
-    if (d > 1) {
-      // check that portal edges are bichromatic
-      assert(vertex_colours[e[i].target(g)]
-            != vertex_colours[e[(i+1)%d)].source(g)]);
-    }
+void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
+  int chromacity = s.size();   // number of colours/tripods on the boundary
+  for (auto i = 0; i < chromacity; i++) {
+    assert(solid_edge(s[i]));
+    assert(vertex_colours[s[i].target(g)]
+      == vertex_colours[s[(i+1)%chromacity].source(g)]);
   }
-
+  // create a new tripod y with two empty legs with feet on e[0].source() and
+  // e[0].target, and a third leg starting at e0.opposite()
   bipod y;
-  y.tau = e0.next_edge_vertex(g);
+  y.tau = s[0].next_edge_vertex(g);
   grow_leg(y, bipods.size(), 1);
 
+  // find location of third foot on the boundary
+  // after this, the third foot of y is in e[j].target(),...,e.[j+1].source()
+  int j = 0;
+  while (j < chromacity &&
+         vertex_colours[foot(y, 1)] != vertex_colours[s[j].target(g)]) {
+    j++;
+  }
+  assert(j < chromacity);
+  
   if (y.legs[1].empty()) {
-    // check if left subproblem is non-empty
-    if (!solid_edge(y.tau)) {
-      make_solid(y.tau);
-      auto j = 0;
-      while (j < e.size() && vertex_colours[foot(y)]
-                             != vertex_colours[e[j].source(g)]) {
-        j++;
+    // y is empty, make y.tau solid, but don't add y to our list of bipods
+    auto el = y.tau;
+    if (!solid_edge(el)) {
+      make_solid(el);
+      // left subproblem is non-empty, with chromacity-j tripods on its boundary
+      subproblem sl(chromacity-j);
+      sl[0] = el;
+      for (auto k = j+1; k < chromacity; k++) {
+        sl[k-j] = s[k];
       }
-      assert(j < e.size());
-      std::vector<half_edge>
-
-      for (auto j = 0; j < e.size() && ; j++) {
-
-      }
-      subproblems.push_back(std::vector<half_edge>(1, y.tau));
+      subproblems.push_back(sl);
     }
-    // check if right subproblem is non-empty
-    auto e2 = e0.next_edge_face(g).reverse(g);
-    if (!solid_edge(e2)) {
-      make_solid(e2);
-      subproblems.push_back(std::vector<half_edge> {e2});
+    auto er = s[0].next_edge_face(g).reverse(g);
+    if (!solid_edge(er)) {
+      make_solid(er);
+      // right subproblem is non-empty, with j+1 tripods on its boundary
+      subproblem sr(j+1);
+      sr[0] = er;
+      for (auto k = 1; k <= j; k++) {
+        sr[k] = s[k];
+      }
+      subproblems.push_back(sr);
     }
   } else {
-    // y is non-empty, subproblems are bichromatic
+    // y is non-empty, make y.tau solid and add y to our list of tripods
     make_solid(y.tau);
     bipods.push_back(y);
     // check left subproblem
-    auto e2 = t[y.legs[1].back()];
-    if (y.tau != e2.reverse(g)) {
-      subproblems.push_back(std::vector<half_edge> {y.tau, e2});
+    auto el0 = y.tau;;
+    auto el1 = t[y.legs[1].back()];
+    if (el0 != el1.reverse(g)) {
+      // non-empty subproblem with chromacity-j+1 tripods on its boundary
+      subproblem sl(chromacity-j+1);
+      sl[0] = el0;
+      sl[1] = el1;
+      for (auto k = j+1; k < chromacity; k++) {
+        sl[k-j+1] = s[k];
+      }
+      subproblems.push_back(sl);
     }
     // check right subproblem
-    auto e1 = e0.next_edge_face(g).reverse(g);
-    make_solid(e1);
-    e2 = t[y.legs[1].back()].reverse(g);
-    if (e1 != e2.reverse(g)) {
-      subproblems.push_back(std::vector<half_edge> {e1, e2});
+    auto er0 = el1.reverse(g);
+    auto er1 = s[0].next_edge_face(g).reverse(g);
+    make_solid(er1);
+    if (er0 != er1.reverse(g)) {
+      // non-empty subproblem with chromacity-j+1 tripods on its boundary
+      subproblem sr(j+2);
+      sr[0] = er0;
+      sr[1] = er1;
+      for (auto k = 1; k <= j; k++) {
+        sr[k+1] = s[k];
+      }
+      subproblems.push_back(sr);
     }
   }
 }
 
-void bipod_partition_algorithm::monochromatic_instance(const half_edge e0 ) {
-  // assert(face_colours[e0.left_face(g)] == -1);
 
-  bipod y;
-  y.tau = e0.next_edge_vertex(g);
-  grow_leg(y, bipods.size(), 1);
-
-  if (y.legs[1].empty()) {
-    // y is empty, subproblems are monochromatic
-    // check if left subproblem is non-empty
-    if (!solid_edge(y.tau)) {
-      make_solid(y.tau);
-      subproblems.push_back(std::vector<half_edge>(1, y.tau));
-    }
-    // check if right subproblem is non-empty
-    auto e2 = e0.next_edge_face(g).reverse(g);
-    if (!solid_edge(e2)) {
-      make_solid(e2);
-      subproblems.push_back(std::vector<half_edge> {e2});
-    }
-  } else {
-    // y is non-empty, subproblems are bichromatic
-    make_solid(y.tau);
-    bipods.push_back(y);
-    // check left subproblem
-    auto e2 = t[y.legs[1].back()];
-    if (y.tau != e2.reverse(g)) {
-      subproblems.push_back(std::vector<half_edge> {y.tau, e2});
-    }
-    // check right subproblem
-    auto e1 = e0.next_edge_face(g).reverse(g);
-    make_solid(e1);
-    e2 = t[y.legs[1].back()].reverse(g);
-    if (e1 != e2.reverse(g)) {
-      subproblems.push_back(std::vector<half_edge> {e1, e2});
-    }
-  }
-}
-
-void bipod_partition_algorithm::bichromatic_instance(const half_edge e0, const half_edge e1) {
-  // assert(face_colours[e0.left_face(g)] == -1);
-  // assert(face_colours[e1.left_face(g)] == -1);
-  assert(e0.reverse(g) != e1);
-  assert(vertex_colours[e0.source(g)] == vertex_colours[e1.target(g)]);
-  assert(vertex_colours[e1.source(g)] == vertex_colours[e0.target(g)]);
-
-  // y has two empty legs e.source() and e0.target, and a
-  // third leg from e0.opposite()
-  bipod y;
-  y.tau = e0.next_edge_vertex(g);
-  grow_leg(y, bipods.size(), 1);
-
-  if (y.legs[1].empty()) {
-    // y is empty, subproblems are mono and bichromatic
-
-    // face_colours[y.tau] = g.nFaces();
-    // check if left subproblem is non-empty
-    // half_edge e2 = e0.next_edge_vertex(g);
-    if (!solid_edge(y.tau)) {
-      // non-empty, is it monochromatic or bichromatic?
-      if (vertex_colours[y.tau.target(g)] == vertex_colours[y.tau.source(g)]) {
-        // monochromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {y.tau});
-      } else {
-        // bichromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {y.tau, e1});
-      }
-    }
-    // check if right subproblem is non-empty
-    auto e2 = e0.next_edge_face(g).reverse(g);
-    if (!solid_edge(e2)) {
-      // non-empty, is it monochromatic or bichromatic?
-      if (vertex_colours[e2.target(g)] == vertex_colours[e2.source(g)]) {
-        // monochromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {e2});
-      } else {
-        // bichromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {e1, e2});
-      }
-    }
-  } else {
-    // y is non-empty, subproblems are bi and trichromatic
-    // face_colours[y.tau] = bipods.size();
-    bipods.push_back(y);
-    make_solid(y.tau);
-    // check if left subproblem is non-empty
-    // half_edge e2 = e0.next_edge_vertex(g);
-    half_edge e3 = t[y.legs[1].back()];
-    if (y.tau != e3.reverse(g)) {
-      if (vertex_colours[e3.target(g)] == vertex_colours[y.tau.source(g)]) {
-        // bichromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {y.tau, e3});
-      } else {
-        // trichromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {e1, y.tau, e3});
-      }
-    }
-    // check if right subproblem is non-empty
-    auto e2 = e0.next_edge_face(g).reverse(g);
-    e3 = t[y.legs[1].back()].reverse(g);
-    if (e2 != e3.reverse(g)) {
-      if (vertex_colours[e3.source(g)] == vertex_colours[e2.target(g)]) {
-        // bichromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {e2, e3});
-      } else {
-        // trichromatic subproblem
-        subproblems.push_back(std::vector<half_edge> {e1, e3, e2});
-      }
-    }
-  }
-}
-
-// int bipod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
-//   // find the triangle with vertices of all three colours
-//   auto p = lca->query(f0, f1);
-//   auto r = lca->query(p, f2);
-//
-//   if (bt[r][1] == -1 || bt[r][2] == -1) {
-//     // r has only one child, so it is one of the input faces
-//     // and the other two faces are in the same subtree
-//     if (r == f0) {
-//       return lca->query(f1, f2);
-//     } else if (r == f1) {
-//       return lca->query(f0, f2);
-//     } else /* r == f2 */ {
-//       return lca->query(f0, f1);
-//     }
-//   }
-//   // r has two children, two of the input faces are in one subtree
-//   if (p != r) {
-//     // f0 and f1 are in the same subtree of r
-//     return p;
-//   }
-//   // f0 and f1 are in different subtrees of r, we need to know which one contains f2
-//   auto q = lca->query(f0, f2);
-//   if (q != r) {
-//     // f0 and f2 are in the same subtree of r
-//     return q;
-//   }
-//   return lca->query(f1, f2);
-// }
-
-
-void bipod_partition_algorithm::trichromatic_instance(const std::vector<half_edge>& e) {
-  int i;
-  for (i = 0; i < 3; i++) {
-    assert(vertex_colours[e[i].target(g)] == vertex_colours[e[(i+1)%3].source(g)]);
-  }
-
-  int f[3] = { e[0].left_face(g), e[1].left_face(g), e[2].left_face(g) };
-
-  bipod y;
-  for (i = 0; i < 3 && f[i] != f[(i+1)%3]; i++) {}
-  if (i < 3) {
-    // Sperner triangle is f[i] when f[i] == f[i+1]
-    y.tau = f[i];
-  } else {
-    // f[0], f[1], and f[2] are distinct, use LCA structure
-    y.tau = find_sperner_triangle(f[0], f[1], f[2]);
-  }
-
-  // Construct the bipod
-  grow_legs(y, bipods.size());
-  for (i = 0; i < 3; i++) {
-    assert(vertex_colours[foot(y, i)] != vertex_colours[foot(y, (i+1)%3)]);
-  }
-  // bipod is complete, add it to the list
-  if (y.empty()) {
-    face_colours[y.tau] = g.nFaces();
-  } else {
-    face_colours[y.tau] = bipods.size();
-    bipods.push_back(y);
-  }
-
-  // orient y with respect to e[0],e[1],e[2] so that foot(y,r+i) is "between"
-  // e[i-1] and e[i] on the boundary of the subproblem
-  int r = 0;
-  while (r < 3 && vertex_colours[e[0].source(g)] != vertex_colours[foot(y, r)]) {
-    r++;
-  }
-  assert(r < 3);
-  for (i = 0; i < 3; i++) {
-    assert(vertex_colours[foot(y,(r+i)%3)] == vertex_colours[e[i].source(g)]);
-  }
-
-  for (i = 0; i < 3; i++) {
-    // subproblem with portals at leg r+i, e[i], and leg (r+i+1)
-    half_edge a0;
-    if (y.legs[(r+i)%3].empty()) {
-      a0 = half_edge(y.tau, (r+i)%3).reverse(g);
-    } else {
-      a0 = t[y.legs[(r+i)%3].back()];
-    }
-    half_edge a1;
-    if (y.legs[(r+i+1)%3].empty()) {
-      a1 = half_edge(y.tau, (r+i)%3).reverse(g);
-    } else {
-      a1 = t[y.legs[(r+i+1)%3].back()].reverse(g);
-    }
-    if (a0 == e[i].reverse(g)) {
-      // empty subproblem, do nothing
-    } else if (a0 == a1) {
-      // bichromatic subproblem
-      subproblems.push_back(std::vector<half_edge> {e[i], a0});
-    } else {
-      // trichromatic subproblem
-      subproblems.push_back(std::vector<half_edge> {a0, e[i], a1});
-    }
-  }
+void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
 }

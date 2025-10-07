@@ -106,7 +106,6 @@ void tripod_partition_algorithm::subcritical_instance(const subproblem& s) {
     j++;
   }
   assert(j < chromacity);
-
   
   if (y.legs[lu].empty()) {
     // y is empty, colour y.tau, but don't add y to our list of tripods
