@@ -1,5 +1,5 @@
-CPP=g++
 
+CPP=g++
 
 # Use these for fastest binary
 DEBUGS=
@@ -14,7 +14,8 @@ CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o bipod.o
 HEADERS=$(OBJECTS:.o=.h)
 
-all: tripod_demo bipod_demo
+DEMOS=tripod_demo bipod_demo
+all: $(DEMOS)
 
 tripod_demo: $(OBJECTS) tripod_demo.o
 	$(CPP) $(OBJECTS) $(DEBUGS) tripod_demo.o -o $@
@@ -25,13 +26,10 @@ bipod_demo: $(OBJECTS) bipod_demo.o
 bfs.o : bfs.cc bfs.h triangulation.h
 	$(CPP) -C $(CPPFLAGS) $< -o $@
 
-main.o : tripod_demo.cc $(HEADERS)
-	$(CPP) -C $(CPPFLAGS) $< -o $@
-
 %.o: %.cc %.h
 	$(CPP) -C $(CPPFLAGS) $< -o $@
 
 clean:
-	rm -f *.o main
+	rm -f *.o
 
-reset: clean main
+reset: clean $(DEMOS)
