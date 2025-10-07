@@ -12,7 +12,7 @@ bipod_partition_algorithm::bipod_partition_algorithm(const triangulation& _g, co
     : g(_g),
       bipods(_bipods),
       vertex_colours(g.nVertices(), -1),
-      edge_status(2*g.nFaces(), false),
+      edge_status(3*g.nFaces(), false),
       t(_t),
       bt(g.nFaces()),
       lca(NULL), // dummy, will be initialized later
@@ -51,6 +51,7 @@ void bipod_partition_algorithm::partition(int f0) {
   subproblems.push_back(subproblem {half_edge(f0, 0).reverse(g)});
   while (!subproblems.empty()) {
     auto s = subproblems.back();
+    std::cout << "subproblem size " << s.size() << std::endl;
     subproblems.pop_back();
     if (s.size() < 4) {
       subcritical_instance(s);
@@ -144,4 +145,27 @@ void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
 
 
 void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
+  for (auto i = 0; i < 4; i++) {
+    assert(solid_edge(s[i]));
+    assert(vertex_colours[s[i].target(g)]
+      == vertex_colours[s[(i+1)%4].source(g)]);
+  }
+  
+  // TODO: even the code below contains a bug
+  int i = 0;
+  while (i < 4 && s[i].left_face(g) != s[(i+1)%4].left_face(g)) {
+    i++;
+  }
+  if (i < 4) {
+    // use an empty bipod to get a trichromatic problem
+    subproblem s0(3);
+    s0[0] = s[i].next_edge_vertex(g);
+    make_solid(s0[0]);
+    for (int j = 0; j < 2; j++) {
+      s0[j+1] = s[(i+j+2)%4];
+    }
+    subproblems.push_back(s0);
+    return;
+  } 
+  // Find Sperner edge using LCA queries
 }

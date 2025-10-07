@@ -5,7 +5,7 @@
 #include "triangulation.h"
 #include "bfs.h"
 #include "lca.h"
-#include "tripod.h"
+#include "bipod.h"
 
 int main(int argc, char **argv) {
   // triangulation g(3);
@@ -34,10 +34,10 @@ int main(int argc, char **argv) {
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
 
-  std::cout << "Computing tripod partition...";
+  std::cout << "Computing bipod partition...";
   std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
-  tripod_partition tp(g);
+  bipod_partition bp(g);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
   std::cout << "done ("
