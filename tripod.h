@@ -48,8 +48,12 @@ protected:
 
   std::vector<subproblem> subproblems;
 
-  bool tree_edge(const half_edge e) const {
+  bool tree_edge(const half_edge& e) const {
     return t[e.source(g)] == e || t[e.target(g)] == e.reverse(g);
+  }
+
+  bool tree_root(int v) const {
+    return t[v].f < 0 && t[v].i < 0;
   }
 
   int foot(const tripod& y, int lu) const {

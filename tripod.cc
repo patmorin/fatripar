@@ -33,7 +33,16 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
 }
 
 
+// Run the partition algorithm
 void tripod_partition_algorithm::partition(int f0) {
+  assert(tripods.empty());
+  assert(subproblems.empty());
+  // f0 must be incident to the root of t
+  assert(tree_root(g[f0].vertices[0])
+    || tree_root(g[f0].vertices[1])
+    || tree_root(g[f0].vertices[2]));
+    
+  // Create the first tripod that contains vertices of f0
   tripod t0;
   t0.tau = f0;
   for (auto i = 0; i < 3; i++) {
@@ -43,7 +52,10 @@ void tripod_partition_algorithm::partition(int f0) {
   tripods.push_back(t0);
   face_colours[f0] = 0;
 
+  // First tripod defines one monochromatic subproblem
   subproblems.push_back(subproblem {half_edge(f0, 0).reverse(g)});
+
+  // Simulate recursive algorithm using this->subproblems as a stack
   while (!subproblems.empty()) {
     auto s = subproblems.back();
     subproblems.pop_back();
@@ -57,106 +69,97 @@ void tripod_partition_algorithm::partition(int f0) {
   }
 }
 
-
-int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
-  // find the triangle with vertices of all three colours
-  auto p = lca->query(f0, f1);
-  auto r = lca->query(p, f2);
-
-  if (bt[r][1] == -1 || bt[r][2] == -1) {
-    // r has only one child, so it is one of the input faces
-    // and the other two faces are in the same subtree
-    if (r == f0) {
-      return lca->query(f1, f2);
-    } else if (r == f1) {
-      return lca->query(f0, f2);
-    } else /* r == f2 */ {
-      return lca->query(f0, f1);
-    }
-  }
-  // r has two children, two of the input faces are in one subtree
-  if (p != r) {
-    // f0 and f1 are in the same subtree of r
-    return p;
-  }
-  // f0 and f1 are in different subtrees of r, we need to know which one contains f2
-  auto q = lca->query(f0, f2);
-  if (q != r) {
-    // f0 and f2 are in the same subtree of r
-    return q;
-  }
-  return lca->query(f1, f2);
-}
-
+#pragma GCC diagnostic ignored "-Wcomment" 
+// Handle a subproblem with less than 3 tripods on its boundary.
+// We handle this by using s[0].left_face() as our "Sperner" triangle.
+// The resulting tripod y has two empty legs on s[0].source and s[0].target
+// and a third leg that starts at s[0].opposite.
+// This can produce up to two non-empty subproblems.
+//               |
+//               |
+//  left         |    right
+// subproblem   / \  subproblem
+//             /   \
+//            /_____\
+//             s[0]
+//
+#pragma GCC diagnostic pop
 void tripod_partition_algorithm::subcritical_instance(const subproblem& s) {
-  int chromacity = s.size();   // d is the "degree" (number of colours) in subproblem
+  int chromacity = s.size();   // number of colours/tripods on the boundary
   for (auto i = 0; i < chromacity; i++) {
     assert(face_colours[s[i].left_face(g)] == -1);
-    assert(vertex_colours[s[i].target(g)] == vertex_colours[s[(i+1)%chromacity].source(g)]);
+    assert(vertex_colours[s[i].target(g)]
+      == vertex_colours[s[(i+1)%chromacity].source(g)]);
   }
   // create a new tripod y with two empty legs with feet on e[0].source() and
-  // e[0].target, and a third leg from e0.opposite()
+  // e[0].target, and a third leg starting at e0.opposite()
   tripod y;
   y.tau = s[0].left_face(g);
   int lu = (s[0].i+2) % 3;
   grow_leg(y, tripods.size(), lu);
+
+  // find location of third foot on the boundary
+  // after this, the third foot of y is in e[j].target(),...,e.[j+1].source()
   int j = 0;
-  while (j < chromacity && vertex_colours[foot(y, lu)] != vertex_colours[s[j].target(g)]) {
+  while (j < chromacity &&
+         vertex_colours[foot(y, lu)] != vertex_colours[s[j].target(g)]) {
     j++;
   }
   assert(j < chromacity);
-  // third foot of y is in e[j].target(),...,e.[j+1].source()
 
+  
   if (y.legs[lu].empty()) {
     // y is empty, colour y.tau, but don't add y to our list of tripods
     face_colours[y.tau] = g.nFaces();
-    auto ea = s[0].next_edge_vertex(g);
-    if (!tree_edge(ea) && face_colours[ea.left_face(g)] == -1) {
-      // left subproblem is non-empty and has d-j tripods on its boundary
-      subproblem sa(chromacity-j);
-      sa[0] = ea;
+    auto el = s[0].next_edge_vertex(g);
+    if (!tree_edge(el) && face_colours[el.left_face(g)] == -1) {
+      // left subproblem is non-empty, with chromacity-j tripods on its boundary
+      subproblem sl(chromacity-j);
+      sl[0] = el;
       for (auto k = j+1; k < chromacity; k++) {
-        sa[k-j] = s[k];
+        sl[k-j] = s[k];
       }
-      subproblems.push_back(sa);
+      subproblems.push_back(sl);
     }
-    auto eb = s[0].next_edge_face(g).reverse(g);
-    if (!tree_edge(eb) && face_colours[eb.left_face(g)] == -1) {
-      // right subproblem is non-empty and has j+1 tripods on its boundary
-      subproblem sb(j+1);
-      sb[0] = eb;
+    auto er = s[0].next_edge_face(g).reverse(g);
+    if (!tree_edge(er) && face_colours[er.left_face(g)] == -1) {
+      // right subproblem is non-empty, with j+1 tripods on its boundary
+      subproblem sr(j+1);
+      sr[0] = er;
       for (auto k = 1; k <= j; k++) {
-        sb[k] = s[k];
+        sr[k] = s[k];
       }
-      subproblems.push_back(sb);
+      subproblems.push_back(sr);
     }
   } else {
     // y is non-empty, colour y.tau and add y to our list of tripods
     face_colours[y.tau] = tripods.size();
     tripods.push_back(y);
-    // create left subproblem
-    auto ea0 = s[0].next_edge_vertex(g);
-    auto ea1 = t[y.legs[lu].back()];
-    if (ea0 != ea1.reverse(g)) {
-      subproblem sa(chromacity-j+1);
-      sa[0] = ea0;
-      sa[1] = ea1;
+    // check left subproblem
+    auto el0 = s[0].next_edge_vertex(g);
+    auto el1 = t[y.legs[lu].back()];
+    if (el0 != el1.reverse(g)) {
+      // non-empty subproblem with chromacity-j+1 tripods on its boundary
+      subproblem sl(chromacity-j+1);
+      sl[0] = el0;
+      sl[1] = el1;
       for (auto k = j+1; k < chromacity; k++) {
-        sa[k-j+1] = s[k];
+        sl[k-j+1] = s[k];
       }
-      subproblems.push_back(sa);
+      subproblems.push_back(sl);
     }
-    // create right subproblem
-    auto eb0 = ea1.reverse(g);
-    auto eb1 = s[0].next_edge_face(g).reverse(g);
-    if (eb0 != eb1.reverse(g)) {
-      subproblem sb(j+2);
-      sb[0] = eb0;
-      sb[1] = eb1;
+    // check right subproblem
+    auto er0 = el1.reverse(g);
+    auto er1 = s[0].next_edge_face(g).reverse(g);
+    if (er0 != er1.reverse(g)) {
+      // non-empty subproblem with chromacity-j+1 tripods on its boundary
+      subproblem sr(j+2);
+      sr[0] = er0;
+      sr[1] = er1;
       for (auto k = 1; k <= j; k++) {
-        sb[k+1] = s[k];
+        sr[k+1] = s[k];
       }
-      subproblems.push_back(sb);
+      subproblems.push_back(sr);
     }
   }
 }
@@ -170,6 +173,7 @@ void tripod_partition_algorithm::trichromatic_instance(const subproblem& s) {
 
   int f[3] = { s[0].left_face(g), s[1].left_face(g), s[2].left_face(g) };
 
+  // Find Sperner triangle
   tripod y;
   for (i = 0; i < 3 && f[i] != f[(i+1)%3]; i++) {}
   if (i < 3) {
@@ -230,4 +234,35 @@ void tripod_partition_algorithm::trichromatic_instance(const subproblem& s) {
       subproblems.push_back(subproblem {a0, s[i], a1});
     }
   }
+}
+
+int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
+  auto p = lca->query(f0, f1);
+  auto r = lca->query(p, f2);
+
+  if (bt[r][1] == -1 || bt[r][2] == -1) {
+    // r has only one child, so it is one of the input faces
+    // and the other two faces are in the same subtree
+    if (r == f0) {
+      return lca->query(f1, f2);
+    } else if (r == f1) {
+      return lca->query(f0, f2);
+    } else /* r == f2 */ {
+      return lca->query(f0, f1);
+    }
+  }
+  // r has two children, two of the input faces are in one subtree
+  if (p != r) {
+    // f0 and f1 are in the same subtree of r
+    return p;
+  }
+  // f0 and f1 are in different subtrees of r=p, we need to know which
+  // one contains f2
+  auto q = lca->query(f0, f2);
+  if (q != r) {
+    // f0 and f2 are in the same subtree of r
+    return q;
+  }
+  // f1 and f2 are in the same subtree of r
+  return lca->query(f1, f2);
 }
