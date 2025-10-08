@@ -80,18 +80,33 @@ protected:
     }
   }
 
+  const half_edge find_sperner_edge(const subproblem &s);
+
   void grow_legs(bipod& y, int c) {
     for (auto lu = 0; lu < 2; lu++) {
       grow_leg(y, c, lu);
     }
   }
 
-  // int find_sperner_triangle(int f1, int f2, int f3);
+  // this code is used because nodes in the cotree bt are aligned so that the parent
+  // of a node is at index 0, but faces (triangles) in g are aligned
+  // arbitrarily, so we need to locate the parent of a in g[a].neighbours
+  const half_edge parent_half_edge(int a)  const {
+    // Sperner edge is dual to edge from a1[i1] to its parent
+    auto p = bt[a][0];  // parent of a1[i1] in cotree
+    int r = 0;
+    while (r < 3 && g[a].neighbours[r] != p) {
+      r++;
+    }
+    assert(r < 3);
+    return half_edge(a, r);
+  }
 
   void subcritical_instance(const subproblem& s);
   void quadrichromatic_instance(const subproblem& s);
 
-  public:
+
+public:
   bipod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t, int f0, std::vector<bipod>& _bipods);
 
   void partition(int f0);

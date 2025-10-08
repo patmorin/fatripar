@@ -51,7 +51,6 @@ void bipod_partition_algorithm::partition(int f0) {
   subproblems.push_back(subproblem {half_edge(f0, 0).reverse(g)});
   while (!subproblems.empty()) {
     auto s = subproblems.back();
-    std::cout << "subproblem size " << s.size() << std::endl;
     subproblems.pop_back();
     if (s.size() < 4) {
       subcritical_instance(s);
@@ -166,6 +165,80 @@ void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
     }
     subproblems.push_back(s0);
     return;
-  } 
+  }
   // Find Sperner edge using LCA queries
+  bipod y;
+  y.tau = find_sperner_edge(s);
+  grow_legs(y, bipods.size());
+  make_solid(y.tau);
+
+  // TODO: this is unnecessary work, since find_sperner_edge
+  // already figured this out.
+  auto r = 0;
+  while (r < 4 && vertex_colours[foot(y, 0)] != vertex_colours[s[r].source(g)]) {
+    r++;
+  }
+  assert(r < 4);
+  assert(vertex_colours[foot(y, 1)] == vertex_colours[s[(r+2)%4].source(g)]);
+
+  auto e0 = y.legs[0].empty() ? y.tau : t[y.legs[0].back()].reverse(g);
+  auto e1 = y.legs[1].empty() ? y.tau : t[y.legs[1].back()];
+  if (e0 == e1) {
+    // y is an empty bipod, create trichromatic subproblems
+    assert(e0 == y.tau);
+    subproblems.push_back({y.tau, s[(r+2)%4], s[(r+3)%4]});
+    subproblems.push_back({y.tau.reverse(g), s[r], s[(r+1)%4]});
+  } else {
+    // y is non-empty, create quadrichromatic subproblems
+    bipods.push_back(y);
+    subproblems.push_back({e0, e1, s[(r+2)%4], s[(r+3)%4]});
+    subproblems.push_back({e1.reverse(g), e0.reverse(g), s[r], s[(r+1)%4]});
+  }
+}
+
+
+
+const half_edge bipod_partition_algorithm::find_sperner_edge(
+  const subproblem &s) {
+
+  // find branching triangle for faces 0, 1, 2
+  int f1[3] = {s[0].left_face(g), s[1].left_face(g), s[2].left_face(g)};
+  int a1[3];
+  for (auto i = 0; i < 3; i++) {
+    a1[i] = lca->query(f1[i], f1[(i+1)%3]);
+  }
+  auto i1 = 0;
+  while (i1 < 3 && a1[i1] != a1[(i1+1)%3]) {
+    i1++;
+  }
+  assert(i1 < 3);
+  i1 = (i1 + 2) % 3;
+
+  // bt - a has f1[0], f1[1], and f1[2] in different components
+  auto a = a1[i1];
+  // auto p = bt[a][0];  // parent of a in the cotree bt
+
+  // bt - ap has a component that contains {f1[i1], f1[i1+1]], a} and a
+  // component that contains {f1[i1+2], p}
+
+  // determine which component of bt - ap contains s[3].left_face()
+  int f2[3] = {f1[i1], f1[(i1+1)%3], s[3].left_face(g)};
+  int a2[3] = {a1[i1], -1, -1};
+  for (auto i = 1; i < 3; i++) {
+    a2[i] = lca->query(f2[i],f2[(i+1)%3]);
+  }
+  auto i2 = 0;
+  while (i2 < 3 && a2[i2] != a2[(i2+1)%3]) {
+    i2++;
+  }
+  assert(i2 < 3);
+  i2 = (i2+2) % 3;
+
+  if (a1[i1] == a2[i2]) {
+    // s[3].left_face() is in same component as { f1[i1+2, p }.
+    return parent_half_edge(a);
+  } else {
+    // s[3].left_face() is in same component as {f1[i1], f1[i1+1], a}
+    return parent_half_edge(a2[i2]);
+  }
 }
