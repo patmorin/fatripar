@@ -14,7 +14,7 @@ CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o bipod.o monopod.o
 HEADERS=$(OBJECTS:.o=.h)
 
-DEMOS=tripod_demo bipod_demo
+DEMOS=tripod_demo bipod_demo monopod_demo
 all: $(DEMOS)
 
 tripod_demo: $(OBJECTS) tripod_demo.o

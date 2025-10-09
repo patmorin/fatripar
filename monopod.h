@@ -10,7 +10,6 @@
 #include "lca.h"
 
 struct monopod {
-  half_edge tau;
   std::vector<int> legs[1]; // for consistency with bipods and tripods
   
   const size_t size() const {
@@ -61,24 +60,27 @@ protected:
     return edge_status[3*e.f + e.i] || edge_status[3*e2.f + e2.i];
   }
 
+  bool tree_root(int v) const { return t[v].f < 0; }
+
   void make_solid(const half_edge& e) {
     edge_status[3*e.f + e.i] = true;
     auto e2= e.reverse(g);
     edge_status[3*e2.f + e2.i] = true;
   }
 
-  int foot(const monopod& y, int lu) const {
-    if (y.legs[lu].empty()) {
-      return g[y.tau.f].vertices[(y.tau.i+lu)%3];
-    } else {
-      return t[y.legs[lu].back()].target(g);
-    }
-  }
+  // int foot(const monopod& y, int lu) const {
+  //   assert(lu == 0);
+  //   if (y.legs[lu].empty()) {
+  //     return g[y.tau.f].vertices[(y.tau.i+lu)%3];
+  //   } else {
+  //     return t[y.legs[lu].back()].target(g);
+  //   }
+  // }
 
-  void grow_leg(monopod& y, int c, int lu) {
-    int u = g[y.tau.f].vertices[(y.tau.i+lu)%3];
+  void grow_leg(monopod& y, int c, int u0) {
+    int u = u0;
     while (vertex_colours[u] == -1) {
-      y.legs[lu].push_back(u);
+      y.legs[0].push_back(u);
       vertex_colours[u] = c;
       make_solid(t[u]);
       u = t[u].target(g);
@@ -87,11 +89,11 @@ protected:
 
   // const half_edge find_sperner_edge(const subproblem &s);
 
-  void grow_legs(monopod& y, int c) {
-    for (auto lu = 0; lu < 1; lu++) {
-      grow_leg(y, c, lu);
-    }
-  }
+  // void grow_legs(monopod& y, int c) {
+  //   for (auto lu = 0; lu < 1; lu++) {
+  //     grow_leg(y, c, lu);
+  //   }
+  // }
 
   // this code is used because nodes in the cotree bt are aligned so that the parent
   // of a node is at index 0, but faces (triangles) in g are aligned

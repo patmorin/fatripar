@@ -44,22 +44,27 @@ monopod_partition_algorithm::monopod_partition_algorithm(const triangulation& _g
 }
 
 void monopod_partition_algorithm::partition(int f0) {
-  monopod b0;
-  b0.tau = half_edge(f0, 1);
-  b0.legs[0].push_back(g[b0.tau.f].vertices[1]);
-  b0.legs[0].push_back(g[b0.tau.f].vertices[0]);
-  b0.legs[1].push_back(g[b0.tau.f].vertices[2]);
+  // TODO: tripod and bipod partitions should also start with code like this
+  assert(bt[f0][0] < 0);  // f0 must be the root of the cotree
   for (auto i = 0; i < 3; i++) {
-    vertex_colours[g[b0.tau.f].vertices[i]] = 0;
-    make_solid(half_edge(b0.tau.f, i));
+    make_solid(half_edge(f0, i));
+    monopod m;
+    m.legs[0].push_back(g[f0].vertices[i]);
+    vertex_colours[g[f0].vertices[i]] = monopods.size();
+    monopods.push_back(m);
   }
-  monopods.push_back(b0);
-  // face_colours[f0] = 0;
+  subproblems.push_back({half_edge(f0, 2).reverse(g),
+                        half_edge(f0, 1).reverse(g),
+                        half_edge(f0, 0).reverse(g)});
 
-
-  subproblems.push_back(subproblem {half_edge(f0, 0).reverse(g)});
   while (!subproblems.empty()) {
     auto s = subproblems.back();
+
+    for (size_t i = 0; i < s.size(); i++) {
+      printf(i+1 == s.size() ? "%d-%d\n" : "%d-%d-", vertex_colours[s[i].source(g)],
+        vertex_colours[s[i].target(g)]);
+    }
+    
     subproblems.pop_back();
     if (s.size() < 5) {
       subcritical_instance(s);
@@ -78,24 +83,25 @@ void monopod_partition_algorithm::subcritical_instance(const subproblem& s) {
     assert(vertex_colours[s[i].target(g)]
       == vertex_colours[s[(i+1)%chromacity].source(g)]);
   }
-  // create a new tripod y with two empty legs with feet on e[0].source() and
-  // e[0].target, and a third leg starting at e0.opposite()
+  // create a new monopod y with a foot on e[0].source() that grows from
+  // e[0].opposite()
   monopod y;
-  y.tau = s[0].next_edge_vertex(g);
-  grow_leg(y, monopods.size(), 1);
+  auto tau = s[0].next_edge_vertex(g);
+  grow_leg(y, monopods.size(), tau.target(g));
+  auto foot = y.empty() ? tau.target(g) : t[y.legs[0].back()].target(g);
 
-  // find location of third foot on the boundary
-  // after this, the third foot of y is in e[j].target(),...,e.[j+1].source()
+  // find location of foot on the boundary
+  // after this, the foot of y is in e[j].target(),...,e.[j+1].source()
   int j = 0;
   while (j < chromacity &&
-         vertex_colours[foot(y, 1)] != vertex_colours[s[j].target(g)]) {
+         vertex_colours[foot] != vertex_colours[s[j].target(g)]) {
     j++;
   }
   assert(j < chromacity);
   
-  if (y.legs[1].empty()) {
+  if (y.legs[0].empty()) {
     // y is empty, make y.tau solid, but don't add y to our list of monopods
-    auto el = y.tau;
+    auto el = tau;
     if (!solid_edge(el)) {
       make_solid(el);
       // left subproblem is non-empty, with chromacity-j tripods on its boundary
@@ -119,11 +125,11 @@ void monopod_partition_algorithm::subcritical_instance(const subproblem& s) {
     }
   } else {
     // y is non-empty, make y.tau solid and add y to our list of tripods
-    make_solid(y.tau);
+    make_solid(tau);
     monopods.push_back(y);
     // check left subproblem
-    auto el0 = y.tau;;
-    auto el1 = t[y.legs[1].back()];
+    auto el0 = tau;;
+    auto el1 = t[y.legs[0].back()];
     if (el0 != el1.reverse(g)) {
       // non-empty subproblem with chromacity-j+1 tripods on its boundary
       subproblem sl(chromacity-j+1);
@@ -156,54 +162,25 @@ void monopod_partition_algorithm::pentachromatic_instance(const subproblem& s) {
   for (auto i = 0; i < 4; i++) {
     assert(solid_edge(s[i]));
     assert(vertex_colours[s[i].target(g)]
-      == vertex_colours[s[(i+1)%4].source(g)]);
+      == vertex_colours[s[(i+1)%5].source(g)]);
   }
-  
-  // TODO: even the code below contains a bug
+
+  // check if two of our portal edges bound the same triangle
   int i = 0;
-  while (i < 4 && s[i].left_face(g) != s[(i+1)%4].left_face(g)) {
+  while (i < 5 && s[i].left_face(g) != s[(i+1)%5].left_face(g)) {
     i++;
   }
-  if (i < 4) {
-    // use an empty monopod to get a trichromatic problem
-    subproblem s0(3);
-    s0[0] = s[i].next_edge_vertex(g);
-    make_solid(s0[0]);
-    for (int j = 0; j < 2; j++) {
-      s0[j+1] = s[(i+j+2)%4];
-    }
-    subproblems.push_back(s0);
+  if (i < 5) {
+    // s[i] and s[i+1] bound the same triangle, use the third edge of this
+    // triangle to make a trichromatic subproblem
+    half_edge e0 = s[i].next_edge_vertex(g);
+    make_solid(e0);
+    subproblems.push_back({e0, s[(i+2)%5], s[(i+3)%5], s[(i+4)%5]});
     return;
   }
   // Find Sperner edge using LCA queries
+  // TODO: No code here...
   return;
-  monopod y;
-  // y.tau = find_sperner_edge(s);
-  grow_legs(y, monopods.size());
-  make_solid(y.tau);
-
-  // TODO: this is unnecessary work, since find_sperner_edge
-  // already figured this out.
-  auto r = 0;
-  while (r < 4 && vertex_colours[foot(y, 0)] != vertex_colours[s[r].source(g)]) {
-    r++;
-  }
-  assert(r < 4);
-  assert(vertex_colours[foot(y, 1)] == vertex_colours[s[(r+2)%4].source(g)]);
-
-  auto e0 = y.legs[0].empty() ? y.tau : t[y.legs[0].back()].reverse(g);
-  auto e1 = y.legs[1].empty() ? y.tau : t[y.legs[1].back()];
-  if (e0 == e1) {
-    // y is an empty monopod, create trichromatic subproblems
-    assert(e0 == y.tau);
-    subproblems.push_back({y.tau, s[(r+2)%4], s[(r+3)%4]});
-    subproblems.push_back({y.tau.reverse(g), s[r], s[(r+1)%4]});
-  } else {
-    // y is non-empty, create quadrichromatic subproblems
-    monopods.push_back(y);
-    subproblems.push_back({e0, e1, s[(r+2)%4], s[(r+3)%4]});
-    subproblems.push_back({e1.reverse(g), e0.reverse(g), s[r], s[(r+1)%4]});
-  }
 }
 
 
