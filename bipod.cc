@@ -154,21 +154,18 @@ void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
     assert(vertex_colours[s[i].target(g)]
       == vertex_colours[s[(i+1)%4].source(g)]);
   }
-  
-  // TODO: even the code below contains a bug
+
+  // check if two of our portal edges bound the same triangle
   int i = 0;
   while (i < 4 && s[i].left_face(g) != s[(i+1)%4].left_face(g)) {
     i++;
   }
   if (i < 4) {
-    // use an empty bipod to get a trichromatic problem
-    subproblem s0(3);
-    s0[0] = s[i].next_edge_vertex(g);
-    make_solid(s0[0]);
-    for (int j = 0; j < 2; j++) {
-      s0[j+1] = s[(i+j+2)%4];
-    }
-    subproblems.push_back(s0);
+    // s[i] and s[i+1] bound the same triangle, use the third edge of this
+    // triangle to make a trichromatic subproblem
+    half_edge e0 = s[i].next_edge_vertex(g);
+    make_solid(e0);
+    subproblems.push_back({e0, s[(i+2)%4], s[(i+3)%4]});
     return;
   }
   // Find Sperner edge using LCA queries
