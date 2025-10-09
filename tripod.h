@@ -9,7 +9,11 @@ struct tripod {
   int tau;
   std::vector<int> legs[3];
 
-  const bool empty() {
+  size_t size() const {
+    return legs[0].size() + legs[1].size() + legs[2].size();
+  }
+  
+  bool empty() const {
     return legs[0].empty() && legs[1].empty() && legs[2].empty();
   }
 };

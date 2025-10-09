@@ -1,3 +1,7 @@
+//
+// Created by morin on 10/9/25.
+//
+
 #include<chrono>
 #include<iostream>
 #include<vector>
@@ -5,12 +9,12 @@
 #include "bfs.h"
 #include "cotree.h"
 #include "lca.h"
-#include "bipod.h"
+#include "monopod.h"
 
-bipod_partition_algorithm::bipod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t,
-                                                       int f0, std::vector<bipod>& _bipods)
+monopod_partition_algorithm::monopod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t,
+                                                       int f0, std::vector<monopod>& _monopods)
     : g(_g),
-      bipods(_bipods),
+      monopods(_monopods),
       vertex_colours(g.nVertices(), -1),
       edge_status(3*g.nFaces(), false),
       t(_t),
@@ -32,15 +36,15 @@ bipod_partition_algorithm::bipod_partition_algorithm(const triangulation& _g, co
     }
   }
   size_t nv = 0;
-  for (auto y : bipods) {
+  for (auto y : monopods) {
     nv += y.size();
   }
   assert(nv == g.nVertices());
 #endif // DEBUG
 }
 
-void bipod_partition_algorithm::partition(int f0) {
-  bipod b0;
+void monopod_partition_algorithm::partition(int f0) {
+  monopod b0;
   b0.tau = half_edge(f0, 1);
   b0.legs[0].push_back(g[b0.tau.f].vertices[1]);
   b0.legs[0].push_back(g[b0.tau.f].vertices[0]);
@@ -49,7 +53,7 @@ void bipod_partition_algorithm::partition(int f0) {
     vertex_colours[g[b0.tau.f].vertices[i]] = 0;
     make_solid(half_edge(b0.tau.f, i));
   }
-  bipods.push_back(b0);
+  monopods.push_back(b0);
   // face_colours[f0] = 0;
 
 
@@ -57,17 +61,17 @@ void bipod_partition_algorithm::partition(int f0) {
   while (!subproblems.empty()) {
     auto s = subproblems.back();
     subproblems.pop_back();
-    if (s.size() < 4) {
+    if (s.size() < 5) {
       subcritical_instance(s);
-    } else if (s.size() == 4) {
-      quadrichromatic_instance(s);
+    } else if (s.size() == 5) {
+      pentachromatic_instance(s);
     } else {
       assert(false);
     }
   }
 }
 
-void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
+void monopod_partition_algorithm::subcritical_instance(const subproblem& s) {
   int chromacity = s.size();   // number of colours/tripods on the boundary
   for (auto i = 0; i < chromacity; i++) {
     assert(solid_edge(s[i]));
@@ -76,9 +80,9 @@ void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
   }
   // create a new tripod y with two empty legs with feet on e[0].source() and
   // e[0].target, and a third leg starting at e0.opposite()
-  bipod y;
+  monopod y;
   y.tau = s[0].next_edge_vertex(g);
-  grow_leg(y, bipods.size(), 1);
+  grow_leg(y, monopods.size(), 1);
 
   // find location of third foot on the boundary
   // after this, the third foot of y is in e[j].target(),...,e.[j+1].source()
@@ -90,7 +94,7 @@ void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
   assert(j < chromacity);
   
   if (y.legs[1].empty()) {
-    // y is empty, make y.tau solid, but don't add y to our list of bipods
+    // y is empty, make y.tau solid, but don't add y to our list of monopods
     auto el = y.tau;
     if (!solid_edge(el)) {
       make_solid(el);
@@ -116,7 +120,7 @@ void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
   } else {
     // y is non-empty, make y.tau solid and add y to our list of tripods
     make_solid(y.tau);
-    bipods.push_back(y);
+    monopods.push_back(y);
     // check left subproblem
     auto el0 = y.tau;;
     auto el1 = t[y.legs[1].back()];
@@ -148,7 +152,7 @@ void bipod_partition_algorithm::subcritical_instance(const subproblem& s) {
 }
 
 
-void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
+void monopod_partition_algorithm::pentachromatic_instance(const subproblem& s) {
   for (auto i = 0; i < 4; i++) {
     assert(solid_edge(s[i]));
     assert(vertex_colours[s[i].target(g)]
@@ -161,7 +165,7 @@ void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
     i++;
   }
   if (i < 4) {
-    // use an empty bipod to get a trichromatic problem
+    // use an empty monopod to get a trichromatic problem
     subproblem s0(3);
     s0[0] = s[i].next_edge_vertex(g);
     make_solid(s0[0]);
@@ -172,9 +176,10 @@ void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
     return;
   }
   // Find Sperner edge using LCA queries
-  bipod y;
-  y.tau = find_sperner_edge(s);
-  grow_legs(y, bipods.size());
+  return;
+  monopod y;
+  // y.tau = find_sperner_edge(s);
+  grow_legs(y, monopods.size());
   make_solid(y.tau);
 
   // TODO: this is unnecessary work, since find_sperner_edge
@@ -189,13 +194,13 @@ void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
   auto e0 = y.legs[0].empty() ? y.tau : t[y.legs[0].back()].reverse(g);
   auto e1 = y.legs[1].empty() ? y.tau : t[y.legs[1].back()];
   if (e0 == e1) {
-    // y is an empty bipod, create trichromatic subproblems
+    // y is an empty monopod, create trichromatic subproblems
     assert(e0 == y.tau);
     subproblems.push_back({y.tau, s[(r+2)%4], s[(r+3)%4]});
     subproblems.push_back({y.tau.reverse(g), s[r], s[(r+1)%4]});
   } else {
     // y is non-empty, create quadrichromatic subproblems
-    bipods.push_back(y);
+    monopods.push_back(y);
     subproblems.push_back({e0, e1, s[(r+2)%4], s[(r+3)%4]});
     subproblems.push_back({e1.reverse(g), e0.reverse(g), s[r], s[(r+1)%4]});
   }
@@ -203,47 +208,47 @@ void bipod_partition_algorithm::quadrichromatic_instance(const subproblem& s) {
 
 
 
-const half_edge bipod_partition_algorithm::find_sperner_edge(
-  const subproblem &s) {
-
-  // find branching triangle for faces 0, 1, 2
-  int f1[3] = {s[0].left_face(g), s[1].left_face(g), s[2].left_face(g)};
-  int a1[3];
-  for (auto i = 0; i < 3; i++) {
-    a1[i] = lca->query(f1[i], f1[(i+1)%3]);
-  }
-  auto i1 = 0;
-  while (i1 < 3 && a1[i1] != a1[(i1+1)%3]) {
-    i1++;
-  }
-  assert(i1 < 3);
-  i1 = (i1 + 2) % 3;
-
-  // bt - a has f1[0], f1[1], and f1[2] in different components
-  auto a = a1[i1];
-  // auto p = bt[a][0];  // parent of a in the cotree bt
-
-  // bt - ap has a component that contains {f1[i1], f1[i1+1]], a} and a
-  // component that contains {f1[i1+2], p}
-
-  // determine which component of bt - ap contains s[3].left_face()
-  int f2[3] = {f1[i1], f1[(i1+1)%3], s[3].left_face(g)};
-  int a2[3] = {a1[i1], -1, -1};
-  for (auto i = 1; i < 3; i++) {
-    a2[i] = lca->query(f2[i],f2[(i+1)%3]);
-  }
-  auto i2 = 0;
-  while (i2 < 3 && a2[i2] != a2[(i2+1)%3]) {
-    i2++;
-  }
-  assert(i2 < 3);
-  i2 = (i2+2) % 3;
-
-  if (a1[i1] == a2[i2]) {
-    // s[3].left_face() is in same component as { f1[i1+2, p }.
-    return parent_half_edge(a);
-  } else {
-    // s[3].left_face() is in same component as {f1[i1], f1[i1+1], a}
-    return parent_half_edge(a2[i2]);
-  }
-}
+// const half_edge monopod_partition_algorithm::find_sperner_edge(
+//   const subproblem &s) {
+//
+//   // find branching triangle for faces 0, 1, 2
+//   int f1[3] = {s[0].left_face(g), s[1].left_face(g), s[2].left_face(g)};
+//   int a1[3];
+//   for (auto i = 0; i < 3; i++) {
+//     a1[i] = lca->query(f1[i], f1[(i+1)%3]);
+//   }
+//   auto i1 = 0;
+//   while (i1 < 3 && a1[i1] != a1[(i1+1)%3]) {
+//     i1++;
+//   }
+//   assert(i1 < 3);
+//   i1 = (i1 + 2) % 3;
+//
+//   // bt - a has f1[0], f1[1], and f1[2] in different components
+//   auto a = a1[i1];
+//   // auto p = bt[a][0];  // parent of a in the cotree bt
+//
+//   // bt - ap has a component that contains {f1[i1], f1[i1+1]], a} and a
+//   // component that contains {f1[i1+2], p}
+//
+//   // determine which component of bt - ap contains s[3].left_face()
+//   int f2[3] = {f1[i1], f1[(i1+1)%3], s[3].left_face(g)};
+//   int a2[3] = {a1[i1], -1, -1};
+//   for (auto i = 1; i < 3; i++) {
+//     a2[i] = lca->query(f2[i],f2[(i+1)%3]);
+//   }
+//   auto i2 = 0;
+//   while (i2 < 3 && a2[i2] != a2[(i2+1)%3]) {
+//     i2++;
+//   }
+//   assert(i2 < 3);
+//   i2 = (i2+2) % 3;
+//
+//   if (a1[i1] == a2[i2]) {
+//     // s[3].left_face() is in same component as { f1[i1+2, p }.
+//     return parent_half_edge(a);
+//   } else {
+//     // s[3].left_face() is in same component as {f1[i1], f1[i1+1], a}
+//     return parent_half_edge(a2[i2]);
+//   }
+// }

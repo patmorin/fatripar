@@ -1,34 +1,35 @@
 //
-// Created by morin on 10/3/25.
+// Created by morin on 10/9/25.
 //
 
-#ifndef FATRIPAR_BIPOD_H
-#define FATRIPAR_BIPOD_H
+#ifndef FATRIPAR_MONOPOD_H
+#define FATRIPAR_MONOPOD_H
+
 
 #include "triangulation.h"
 #include "lca.h"
 
-struct bipod {
+struct monopod {
   half_edge tau;
-  std::vector<int> legs[2];
-
+  std::vector<int> legs[1]; // for consistency with bipods and tripods
+  
   const size_t size() const {
-    return legs[0].size() + legs[1].size();
+    return legs[0].size();
   }
   
   const bool empty() const {
-      return legs[0].empty() && legs[1].empty();
+      return legs[0].empty();
   }
 };
 
-// An instance of the bipod_partition_algorithm.
+// An instance of the monopod_partition_algorithm.
 // This object is designed to be created and then forgotten.
-// It's only purpose is to fill in the bipods array
+// It's only purpose is to fill in the monopods array
 // provided in its constructor.
-class bipod_partition_algorithm {
+class monopod_partition_algorithm {
 protected:
   const triangulation& g;
-  std::vector<bipod> &bipods;
+  std::vector<monopod> &monopods;
   std::vector<int> vertex_colours;
   std::vector<bool> edge_status;
   const std::vector<half_edge>& t;
@@ -38,7 +39,7 @@ protected:
   class subproblem final {
   private:
     size_t chromacity;
-    half_edge portals[4];
+    half_edge portals[5];
 
   public:
     subproblem(size_t _n) : chromacity(_n) { }
@@ -66,7 +67,7 @@ protected:
     edge_status[3*e2.f + e2.i] = true;
   }
 
-  int foot(const bipod& y, int lu) const {
+  int foot(const monopod& y, int lu) const {
     if (y.legs[lu].empty()) {
       return g[y.tau.f].vertices[(y.tau.i+lu)%3];
     } else {
@@ -74,7 +75,7 @@ protected:
     }
   }
 
-  void grow_leg(bipod& y, int c, int lu) {
+  void grow_leg(monopod& y, int c, int lu) {
     int u = g[y.tau.f].vertices[(y.tau.i+lu)%3];
     while (vertex_colours[u] == -1) {
       y.legs[lu].push_back(u);
@@ -84,10 +85,10 @@ protected:
     }
   }
 
-  const half_edge find_sperner_edge(const subproblem &s);
+  // const half_edge find_sperner_edge(const subproblem &s);
 
-  void grow_legs(bipod& y, int c) {
-    for (auto lu = 0; lu < 2; lu++) {
+  void grow_legs(monopod& y, int c) {
+    for (auto lu = 0; lu < 1; lu++) {
       grow_leg(y, c, lu);
     }
   }
@@ -107,33 +108,32 @@ protected:
   }
 
   void subcritical_instance(const subproblem& s);
-  void quadrichromatic_instance(const subproblem& s);
+  void pentachromatic_instance(const subproblem& s);
 
 
 public:
-  bipod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t, int f0, std::vector<bipod>& _bipods);
+  monopod_partition_algorithm(const triangulation& _g, const std::vector<half_edge>& _t, int f0, std::vector<monopod>& _monopods);
 
   void partition(int f0);
 };
 
-// A bipod partition P of the vertices of a triangulaton g, so that tw(g/P) <= 4.
-class bipod_partition {
+// A monopod partition P of the vertices of a triangulaton g, so that tw(g/P) <= 3.
+class monopod_partition {
 public:
   const triangulation& g;
-  std::vector<bipod> bipods;
+  std::vector<monopod> monopods;
 
   // Advanced constructor. Requires that f0 be incident to the root of t
-  bipod_partition(const triangulation& _g, std::vector<half_edge>& t, int f0) : g(_g), bipods() {
-    bipod_partition_algorithm(g, t, f0, bipods);
+  monopod_partition(const triangulation& _g, std::vector<half_edge>& t, int f0) : g(_g), monopods() {
+    monopod_partition_algorithm(g, t, f0, monopods);
   }
 
   // Standard partition that gives H*P*K_3 where tw(H) <= 3
-  bipod_partition(const triangulation& _g) : g(_g), bipods() {
+  monopod_partition(const triangulation& _g) : g(_g), monopods() {
     std::vector<half_edge> t(g.nVertices(), half_edge(-2,-2));
     bfs_tree(g, half_edge(0, 0), t);
-    bipod_partition_algorithm(g, t, 0, bipods);
+    monopod_partition_algorithm(g, t, 0, monopods);
   }
 };
 
-
-#endif //FATRIPAR_BIPOD_H
+#endif //FATRIPAR_MONOPOD_H

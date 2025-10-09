@@ -11,7 +11,7 @@ OPTS=-Og
 
 CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
 
-OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o bipod.o
+OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o bipod.o monopod.o
 HEADERS=$(OBJECTS:.o=.h)
 
 DEMOS=tripod_demo bipod_demo
@@ -22,6 +22,9 @@ tripod_demo: $(OBJECTS) tripod_demo.o
 
 bipod_demo: $(OBJECTS) bipod_demo.o
 	$(CPP) $(OBJECTS) $(DEBUGS) bipod_demo.o -o $@
+
+monopod_demo: $(OBJECTS) monopod_demo.o
+	$(CPP) $(OBJECTS) $(DEBUGS) monopod_demo.o -o $@
 
 bfs.o : bfs.cc bfs.h triangulation.h
 	$(CPP) -C $(CPPFLAGS) $< -o $@
