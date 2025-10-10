@@ -60,10 +60,10 @@ void monopod_partition_algorithm::partition(int f0) {
   while (!subproblems.empty()) {
     auto s = subproblems.back();
 
-    for (size_t i = 0; i < s.size(); i++) {
-      printf(i+1 == s.size() ? "%d-%d\n" : "%d-%d-", vertex_colours[s[i].source(g)],
-        vertex_colours[s[i].target(g)]);
-    }
+    // for (size_t i = 0; i < s.size(); i++) {
+    //   printf(i+1 == s.size() ? "%d-%d\n" : "%d-%d-", vertex_colours[s[i].source(g)],
+    //     vertex_colours[s[i].target(g)]);
+    // }
     
     subproblems.pop_back();
     if (s.size() < 5) {
@@ -157,6 +157,43 @@ void monopod_partition_algorithm::subcritical_instance(const subproblem& s) {
   }
 }
 
+// TODO: Both implementations of these algorithms are quite brutal
+int monopod_partition_algorithm::find_central_triangle(const subproblem& s) const {
+  // First, find the three branching nodes in the sub-cotree that spans the
+  // portal faces.
+  int branches[3];
+  for (auto i = 0, j = 0; j < 3; i++) {
+    assert(i < 5);
+    int q[] = {s[i].left_face(g), s[(i+1)%5].left_face(g),
+                               s[(i+2)%5].left_face((g))};
+    auto b = branching_node(q);
+    if (j == 0 || branches[j-1] != b) {
+      branches[j++] = b;
+    }
+  }
+  // The middle branching node defines the "Sperner" triangle we want
+  return branching_node(branches);
+}
+
+int monopod_partition_algorithm::find_central_triangle2(const subproblem& s) const {
+  int branches[5];
+  for (auto i = 0; i < 5; i++)  {
+    int q[] = {s[i].left_face(g), s[(i+1)%5].left_face(g),
+                               s[(i+2)%5].left_face((g))};
+    branches[i] = branching_node(q);
+  }
+  auto i = 0;
+  while (i < 5) {
+    if (branches[i] != branches[(i+1)%5] && branches[i] != branches[(i+4)%5]) {
+      return branches[i];
+    }
+    i++;
+  }
+  assert(i < 5);
+  return -1;
+}
+
+
 
 void monopod_partition_algorithm::pentachromatic_instance(const subproblem& s) {
   for (auto i = 0; i < 4; i++) {
@@ -172,17 +209,86 @@ void monopod_partition_algorithm::pentachromatic_instance(const subproblem& s) {
   }
   if (i < 5) {
     // s[i] and s[i+1] bound the same triangle, use the third edge of this
-    // triangle to make a trichromatic subproblem
+    // triangle to make a quadrichromatic subproblem
     half_edge e0 = s[i].next_edge_vertex(g);
     make_solid(e0);
     subproblems.push_back({e0, s[(i+2)%5], s[(i+3)%5], s[(i+4)%5]});
     return;
   }
-  // Find Sperner edge using LCA queries
-  // TODO: No code here...
+  // Find Sperner triangle using LCA queries
+  auto f = find_central_triangle2(s);
+  // assert(f == find_central_triangle2(s));
+  
+  // grow monopods from each of the three vertices of f
+  monopod m[3];
+  int feet[3];
+  for (auto i = 0; i < 3; i++) {
+    grow_leg(m[i], monopods.size(), g[f].vertices[i]);
+    if (m[i].empty()) {
+      feet[i] = g[f].vertices[i];
+    } else {
+      feet[i] = t[m[i].legs[0].back()].target(g);
+      monopods.push_back(m[i]);
+    }
+    assert(vertex_colours[feet[i]] >= 0);
+  }
+
+  // Locate the feet of the monopods. After this, we know that feet[i] is
+  // "between" s[loc[i]] and s[loc[i]+1] on the boundary of the subproblem s.
+  int loc[3]; 
+  for (auto i = 0; i < 3; i++) {
+    auto j = 0;
+    while (j < 5 && vertex_colours[s[j].target(g)] != vertex_colours[feet[i]]) {
+      j++;
+    }
+    assert(j < 5);
+    loc[i] = j;
+  }
+
+  // Create the subproblems to recurse on
+  for (auto i = 0; i < 3; i++) {
+    half_edge a0;
+    if (m[i].empty()) {
+      a0 = half_edge(f, i).reverse(g);
+    } else {
+      a0 = t[m[i].legs[0].back()];
+    }
+    half_edge a1;
+    if (m[(i+1)%3].empty()) {
+      a1 = half_edge(f, i).reverse(g);
+    } else {
+      a1 = t[m[(i+1)%3].legs[0].back()].reverse(g);
+    }
+    int size0 = loc[i] < loc[(i+1)%3] ?
+       loc[(i+1)%3] - loc[i] : loc[(i+1)%3] + 5 - loc[i];
+    assert(size0 >= 0 && size0 <= 2);
+    // two non-empty monopods, subproblem gets three new portals
+    auto e = half_edge(f, i).reverse(g);
+    int size1 = (a1 != e) + 1 + (a0 != e);
+    if (size1 == 1 && solid_edge(e)) {
+      // empty subproblem
+      assert(f == s[loc[(i+1)%3]].left_face(g));
+      continue;
+    }
+    assert(size0 + size1 <= 5);
+    subproblem s0(size0 + size1);
+    make_solid(e);
+    int j = 0;
+    if (a1 != e) {
+      s0[j++] = a1;
+    }
+    s0[j++] = e;
+    if (a0 != e) {
+      s0[j++] = a0;
+    }
+    assert(j == size1);
+    for (auto k = 0; k < size0; k++) {
+      s0[k+j] = s[(loc[i]+1+k)%5];
+    }        
+    subproblems.push_back(s0);
+  }
   return;
 }
-
 
 
 // const half_edge monopod_partition_algorithm::find_sperner_edge(

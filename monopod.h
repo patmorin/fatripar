@@ -68,14 +68,21 @@ protected:
     edge_status[3*e2.f + e2.i] = true;
   }
 
-  // int foot(const monopod& y, int lu) const {
-  //   assert(lu == 0);
-  //   if (y.legs[lu].empty()) {
-  //     return g[y.tau.f].vertices[(y.tau.i+lu)%3];
-  //   } else {
-  //     return t[y.legs[lu].back()].target(g);
-  //   }
-  // }
+  // Find the branching node among three distinct nodes in bt. If the three
+  // nodes are on a single path, then this is the node that separates the other
+  // two. 
+  int branching_node(int f[3]) const {
+    int a[3];
+    for (auto i = 0; i < 3; i++) {
+      a[i] = lca->query(f[i], f[(i+1)%3]);
+    }
+    for (auto i = 0; i < 3; i++) {
+      if (a[i] == a[(i+1)%3]) {
+        return a[(i+2)%3];
+      }
+    }
+    assert(false);
+  }
 
   void grow_leg(monopod& y, int c, int u0) {
     int u = u0;
@@ -110,6 +117,11 @@ protected:
   }
 
   void subcritical_instance(const subproblem& s);
+
+  int find_central_triangle(const subproblem &s) const;
+
+  int find_central_triangle2(const subproblem &s) const;
+
   void pentachromatic_instance(const subproblem& s);
 
 
