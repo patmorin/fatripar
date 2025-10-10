@@ -5,7 +5,7 @@ C++ code for the linear-time algorithm for partitioning a triangulation into tri
 
 https://arxiv.org/abs/2202.08870
 
-In product structure language, this code produces an embedding of an input triangulation G into the strong product H x P x K<sub>3</sub>, where H is a graph of treewidth at most 3, P is a path, and K_<sub>3</sub> is a 3-cycle.
+In product structure language, this code produces an embedding of an input triangulation G into the strong product H x P x K<sub>3</sub>, where H is a graph of treewidth at most 3, P is a path, and K<sub>3</sub> is a 3-cycle.
 
 ## Building
 
