@@ -5,15 +5,15 @@ C++ code for the linear-time algorithm for partitioning a triangulation into tri
 
 https://arxiv.org/abs/2202.08870
 
-In product structure language, this code produces an embedding of an input triangulation G into the strong product H x P x K_3, where H is a graph of treewidth at most 3, P is a path, and K_3 is a 3-cycle.
+In product structure language, this code produces an embedding of an input triangulation G into the strong product H x P x K<sub>3</sub>, where H is a graph of treewidth at most 3, P is a path, and K_<sub>3</sub> is a 3-cycle.
 
 ## Building
 
-In a typical Linux development environment you should be able to compile the code by typing `make`.  This will create a demonstration program called `main`.
+In a typical Linux development environment you should be able to compile the code by typing `make`.  This will create demonstration programs called `monopod_demo`, `bipod_demo`, and `tripod_demo`.
 
 ## Running
 
-Sample input files and a program for making large inputs are provided in the `inputs/` subdirectory. The `main` program takes the name of one of these files as an argument and creates a tripod decomposition. The code is pretty fast. Partitioning a million-vertex triangulation takes around 1.5 seconds on a very modest desktop.
+Sample input files and a program for making large inputs are provided in the `inputs/` subdirectory. Each `demo` program takes the name of one of these files as an argument and creates a partition. The code is pretty fast. Partitioning a million-vertex triangulation takes around 1.5 seconds on a very modest desktop.
 
 ## Input file format
 
@@ -31,4 +31,8 @@ The input file format consists of a zero'th line that contains the number *n* of
 
 ## Using the code
 
-If you want to use the code in your own project, the class you're probably interested in is the `tripod_partition` class.  It produces a partition X, where H = G/X is the graph that appears in the strong product above.
+If you want to use the code in your own project, the class you're probably interested in is the `tripod_partition` class.  It produces a partition X, where H = G/X is the graph that appears in the strong product above.  In other words, the `tripod_partition` class produces a partition X where G/X has treewidth at most 3 and each part is the union of three vertical paths in a BFS tree.
+
+The `monopod_partition` class produces a partition X where G/X has treewidth at most 6 and each part is a single vertical path in a BFS tree.
+
+The `bipod_partition` class produces a partition X where G/X has treewidth at most 4 and each part is the union of two vertical paths in a BFS tree.
