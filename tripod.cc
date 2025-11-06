@@ -29,6 +29,11 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
   for (int f = 0; f < (int)g.nFaces(); f++) {
     assert(face_colours[f] >= 0);
   }
+  size_t nv = 0;
+  for (auto y : tripods) {
+    nv += y.size();
+  }
+  assert(nv == g.nVertices());
 #endif // DEBUG
 }
 

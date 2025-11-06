@@ -1,0 +1,7 @@
+*.o
+.idea/*
+inputs/*.txt
+inputs/makeinput
+tripod_demo
+bipod_demo
+monopod_demo
