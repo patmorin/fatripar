@@ -41,7 +41,7 @@ void tripod_partition_algorithm::partition(int f0) {
   assert(tree_root(g[f0].vertices[0])
     || tree_root(g[f0].vertices[1])
     || tree_root(g[f0].vertices[2]));
-    
+
   // Create the first tripod that contains vertices of f0
   tripod t0;
   t0.tau = f0;
@@ -69,7 +69,7 @@ void tripod_partition_algorithm::partition(int f0) {
   }
 }
 
-#pragma GCC diagnostic ignored "-Wcomment" 
+#pragma GCC diagnostic ignored "-Wcomment"
 // Handle a subproblem with less than 3 tripods on its boundary.
 // We handle this by using s[0].left_face() as our "Sperner" triangle.
 // The resulting tripod y has two empty legs on s[0].source and s[0].target
@@ -106,7 +106,7 @@ void tripod_partition_algorithm::subcritical_instance(const subproblem& s) {
     j++;
   }
   assert(j < chromacity);
-  
+
   if (y.legs[lu].empty()) {
     // y is empty, colour y.tau, but don't add y to our list of tripods
     face_colours[y.tau] = g.nFaces();
@@ -193,7 +193,7 @@ void tripod_partition_algorithm::trichromatic_instance(const subproblem& s) {
     // y is empty, colour y.tau, but don't add y to our partition
     face_colours[y.tau] = g.nFaces();
   } else {
-    // y is non-empty, could y.tau but don't add y to our partition
+    // y is non-empty, colour it and add it to our partition
     face_colours[y.tau] = tripods.size();
     tripods.push_back(y);
   }
@@ -239,7 +239,7 @@ int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
   int f[3] = { f0, f1, f2 };
   int a[3];
   for (auto i = 0; i < 3; i++) {
-    a[i] = lca->query(f[i], f[(i+1)%3]);    
+    a[i] = lca->query(f[i], f[(i+1)%3]);
   }
   for (auto i = 0; i < 3; i++) {
     if (a[i] == a[(i+1)%3]) {
@@ -249,4 +249,3 @@ int tripod_partition_algorithm::find_sperner_triangle(int f0, int f1, int f2) {
   assert(false);
   return a[0]; // very bad news!
 }
-
