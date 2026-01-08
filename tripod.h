@@ -113,8 +113,12 @@ public:
 
   // Standard partition that gives H*P*K_3 where tw(H) <= 3
   tripod_partition(const triangulation& _g) : g(_g), tripods() {
+    auto start = std::chrono::high_resolution_clock::now();
     std::vector<half_edge> t(g.nVertices(), half_edge(-2,-2));
     bfs_tree(g, half_edge(0, 0), t);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+    std::cout << " " << 1e-9*elapsed;
     tripod_partition_algorithm(g, t, 0, tripods);
   }
 };

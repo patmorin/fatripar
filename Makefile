@@ -6,10 +6,10 @@ DEBUGS=
 OPTS=-O3
 
 # Use these for slow debuggable binary
-DEBUGS=-g -DDEBUG
-OPTS=-Og
+#DEBUGS=-g -DDEBUG
+#OPTS=-Og
 
-CPPFLAGS=-c -Wall $(OPTS) $(DEBUGS)
+CPPFLAGS=-c -Wall -std=c++11 $(OPTS) $(DEBUGS)
 
 OBJECTS=triangulation.o bfs.o cotree.o lca.o rmq.o tripod.o bipod.o monopod.o
 HEADERS=$(OBJECTS:.o=.h)

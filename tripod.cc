@@ -17,10 +17,32 @@ tripod_partition_algorithm::tripod_partition_algorithm(const triangulation& _g, 
       bt(g.nFaces()),
       lca(NULL), // dummy, will be initialized later
       subproblems() {
+
+
+  auto start = std::chrono::high_resolution_clock::now();
   cotree(g, t, f0, bt);
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << " " << 1e-9*elapsed;
+
+  start = std::chrono::high_resolution_clock::now();
   lca = new lca_structure(bt, f0);
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << " " << 1e-9*elapsed;
+
+
+  start = std::chrono::high_resolution_clock::now();
   partition(f0);
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << " " << 1e-9*elapsed;
+
+  start = std::chrono::high_resolution_clock::now();
   delete lca;
+  stop = std::chrono::high_resolution_clock::now();
+  elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+  std::cout << " " << 1e-9*elapsed;
 
 #ifdef DEBUG
   for (int v = 0; v < (int)g.nVertices(); v++) {

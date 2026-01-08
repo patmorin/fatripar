@@ -14,32 +14,25 @@ int main(int argc, char **argv) {
   if (argc == 2) {
     filename = argv[1];
   }
-  std::cout << "Reading input file...";
-  std::cout.flush();
   auto start = std::chrono::high_resolution_clock::now();
   std::ifstream inFile(filename);
   triangulation g(inFile);
   auto stop = std::chrono::high_resolution_clock::now();
+  auto n = g.nVertices();
   auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+  std::cout << n <<  " " << g.nFaces() << " " << 1e-9*elapsed;
 
-  std::cout << g.nVertices() << " vertices and " << g.nFaces()
-            << " faces." << std::endl;
 
-  std::cout << "Verifying...";
   start = std::chrono::high_resolution_clock::now();
   std::cout.flush();
   g.verify();
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done (" << 1e-9*elapsed << "s)" << std::endl;
+  std::cout << " " << 1e-9*elapsed;
 
-  std::cout << "Computing tripod partition...";
-  std::cout.flush();
   start = std::chrono::high_resolution_clock::now();
   tripod_partition tp(g);
   stop = std::chrono::high_resolution_clock::now();
   elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-  std::cout << "done ("
-    << 1e-9*elapsed << "s)" << std::endl;
+  std::cout << " " << 1e-9*elapsed << std::endl;
 }
