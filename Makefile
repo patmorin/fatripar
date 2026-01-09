@@ -18,13 +18,13 @@ DEMOS=tripod_demo bipod_demo monopod_demo
 all: $(DEMOS)
 
 tripod_demo: $(OBJECTS) tripod_demo.o
-	$(CPP) $(OBJECTS) $(DEBUGS) tripod_demo.o -o $@
+	$(CPP) $(OPTS) $(OBJECTS) $(DEBUGS) tripod_demo.o -o $@
 
 bipod_demo: $(OBJECTS) bipod_demo.o
-	$(CPP) $(OBJECTS) $(DEBUGS) bipod_demo.o -o $@
+	$(CPP) $(OPTS) $(OBJECTS) $(DEBUGS) bipod_demo.o -o $@
 
 monopod_demo: $(OBJECTS) monopod_demo.o
-	$(CPP) $(OBJECTS) $(DEBUGS) monopod_demo.o -o $@
+	$(CPP) $(OPTS) $(OBJECTS) $(DEBUGS) monopod_demo.o -o $@
 
 bfs.o : bfs.cc bfs.h triangulation.h
 	$(CPP) -C $(CPPFLAGS) $< -o $@
