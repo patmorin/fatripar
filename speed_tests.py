@@ -2,10 +2,10 @@
 
 import subprocess
 
-ns = [3**i for i in range(2,16)]
+ns = [10000*i for i in range(174,201)]
 reps = 20
 
-with open("data.csv", "w") as fp:
+with open("data.csv", "a") as fp:
     fp.write("nv nf read verify bfs cotree lca partition lca_cleanup total_partition\n")
     fp.flush()
     for n in ns:
